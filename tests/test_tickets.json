@@ -1,0 +1,122 @@
+[
+  {
+    "id": 1,
+    "ticket": "I can't log into my account, it says invalid password even though I reset it yesterday.",
+    "expected_category": "Account Access",
+    "expected_priority": "Medium"
+  },
+  {
+    "id": 2,
+    "ticket": "Server is down for everyone, we are losing money every minute!!",
+    "expected_category": "Bug Report",
+    "expected_priority": "High"
+  },
+  {
+    "id": 3,
+    "ticket": "This is RIDICULOUS, nothing works and I've been waiting 3 days!!!",
+    "expected_category": "Bug Report",
+    "expected_priority": "High"
+  },
+  {
+    "id": 4,
+    "ticket": "broken",
+    "expected_category": "Unclassified",
+    "expected_priority": "Low"
+  },
+  {
+    "id": 5,
+    "ticket": "I was charged twice but now I also can't log in",
+    "expected_category": "Billing",
+    "expected_priority": "Medium"
+  },
+  {
+    "id": 6,
+    "ticket": "wen fix bug plz its verry anoying and i cant acess my acount",
+    "expected_category": "Bug Report",
+    "expected_priority": "Medium"
+  },
+  {
+    "id": 7,
+    "ticket": "",
+    "expected_category": "Unclassified",
+    "expected_priority": "Low"
+  },
+  {
+    "id": 8,
+    "ticket": "Hi support team, I don't really know where to start because I've got a few things going on and none of them are urgent enough on their own to email separately but together they're driving me a little crazy. First and mainly, the app has been crashing on me pretty often over the last week or so, not every single time I open it, maybe one out of every four or five launches, but when it happens the screen just goes completely white and freezes for a few seconds before the whole thing closes on its own. I've tried restarting my phone, reinstalling the app, and clearing the cache, all the usual troubleshooting steps, and it still happens intermittently, which honestly makes it worse because I can never predict when it is going to happen, sometimes right in the middle of typing up a report. Second, and separately, I noticed on my last statement that I was charged twice for my monthly subscription, once on the 3rd and again on the 5th, same amount, same card ending in 7788, and I am hoping someone can look into that and refund the duplicate charge whenever you get a chance, no huge rush since I know these things take a few days to sort out. And third, kind of a random one but since I am already writing in, is there any chance dark mode is coming soon? I use the app a lot late at night and the bright white screens, when it is not crashing, are pretty rough on the eyes at that point. Not a big deal at all if it is not on the roadmap, just curious. Anyway, I would say the crashing is the one that actually needs looking at soonest since it is affecting how I use the app day to day, the billing thing is more of a fix when convenient, and the dark mode thing is just a nice to have wishlist item. Let me know if you need more details on any of these, happy to send screenshots of the crash or the billing statement if that helps.",
+    "expected_category": "Bug Report",
+    "expected_priority": "Medium"
+  },
+  {
+    "id": 9,
+    "ticket": "¿Por qué no puedo acceder a mi cuenta?",
+    "expected_category": "Unclassified",
+    "expected_priority": "Low"
+  },
+  {
+    "id": 10,
+    "ticket": "THIS APP IS TRASH FIX IT NOW!!!!1!",
+    "expected_category": "Unclassified",
+    "expected_priority": "Low"
+  },
+  {
+    "id": 11,
+    "ticket": "asdkjfh qwoieru 12345 !!!",
+    "expected_category": "Unclassified",
+    "expected_priority": "Low"
+  },
+  {
+    "id": 12,
+    "ticket": "Hi team, just wondering if you plan to add dark mode soon? Not urgent at all, whenever you get a chance :)",
+    "expected_category": "Feature Request",
+    "expected_priority": "Low"
+  },
+  {
+    "id": 13,
+    "ticket": "Getting error code 500 when calling /api/v2/orders endpoint intermittently since this morning",
+    "expected_category": "Integration/API",
+    "expected_priority": "Medium"
+  },
+  {
+    "id": 14,
+    "ticket": "My card ending in 4521 was billed $299 instead of $99, please refund the difference",
+    "expected_category": "Billing",
+    "expected_priority": "Medium"
+  },
+  {
+    "id": 15,
+    "ticket": "The app crashes immediately when I open it — nothing loads, just a white screen",
+    "expected_category": "Bug Report",
+    "expected_priority": "High"
+  },
+  {
+    "id": 16,
+    "ticket": "Can someone walk me through how to export my report as PDF? Don't want to mess anything up.",
+    "expected_category": "General Inquiry",
+    "expected_priority": "Low"
+  },
+  {
+    "id": 17,
+    "ticket": "🙂🙂 idk it's just kinda weird lol app doing weird stuff",
+    "expected_category": "Unclassified",
+    "expected_priority": "Low"
+  },
+  {
+    "id": 18,
+    "ticket": "Production database is completely down, no one can process orders",
+    "expected_category": "Bug Report",
+    "expected_priority": "High"
+  },
+  {
+    "id": 19,
+    "ticket": "There's a typo in the footer — copyright year still says 2023",
+    "expected_category": "Bug Report",
+    "expected_priority": "Low"
+  },
+  {
+    "id": 20,
+    "ticket": "Payment gateway intermittently fails for about 5% of transactions since last night",
+    "expected_category": "Billing",
+    "expected_priority": "Medium"
+  }
+]
