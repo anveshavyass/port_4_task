@@ -13,7 +13,8 @@
     "expected_category": "Bug Report",
     "expected_priority": "High",
     "expected_team": "Engineering",
-    "tests": "Known-High severity, unambiguous system-wide outage (M4S6 defensibility)"
+    "expected_system_wide_outage": true,
+    "tests": "Known-High severity, unambiguous system-wide outage (M4S6 defensibility). Explicitly says 'everyone' — system_wide_outage must be true, which tightens the SLA to 1h (Critical) instead of the normal 2h High"
   },
   {
     "id": 3,
@@ -117,7 +118,8 @@
     "expected_category": "Bug Report",
     "expected_priority": "High",
     "expected_team": "Engineering",
-    "tests": "Clear, unambiguous bug: total failure for this user (app is completely unusable), no ambiguity between categories"
+    "expected_system_wide_outage": false,
+    "tests": "Clear, unambiguous bug: total failure for this user (app is completely unusable), no ambiguity between categories. Contrast case for system_wide_outage: this is High because it's a total failure for THIS user, but system_wide_outage must stay false since only 'I'/'me' is mentioned, not many users — distinguishes 'High for other reasons' from 'High because it's genuinely system-wide' (see tickets 2 and 18)"
   },
   {
     "id": 16,
@@ -141,7 +143,8 @@
     "expected_category": "Bug Report",
     "expected_priority": "High",
     "expected_team": "Engineering",
-    "tests": "Known-High severity, unambiguous total outage affecting everyone (M4S6 defensibility)"
+    "expected_system_wide_outage": true,
+    "tests": "Known-High severity, unambiguous total outage affecting everyone (M4S6 defensibility). Explicitly says 'no one can process orders' — system_wide_outage must be true, tightening SLA to 1h"
   },
   {
     "id": 19,
@@ -157,15 +160,17 @@
     "expected_category": "Billing",
     "expected_priority": "Medium",
     "expected_team": "Billing Ops",
-    "tests": "Known-Medium severity, partial/intermittent impact since last night (not total failure, not multi-day). Genuinely borderline between Billing and Integration/API — reasoning should be checked for whether it acknowledges that (M4S6 + M4S5-style ambiguity). Also observed flaky across runs, occasionally over-escalating to High — same consistency caveat as tickets 11 and 13"
+    "expected_system_wide_outage": false,
+    "tests": "Known-Medium severity, partial/intermittent impact since last night (not total failure, not multi-day). Genuinely borderline between Billing and Integration/API — reasoning should be checked for whether it acknowledges that (M4S6 + M4S5-style ambiguity). Also observed flaky across runs, occasionally over-escalating to High — same consistency caveat as tickets 11 and 13. On over-escalated runs, system_wide_outage has also been observed incorrectly true ('5% of transactions' is partial, not everyone) — same root flakiness, not a separate bug"
   },
   {
     "id": 21,
     "ticket": "Someone logged into my account from a device I don't recognize and changed my email and password — I can't get back in.",
-    "expected_category": "Account Access",
+    "expected_category": "Security",
     "expected_priority": "High",
-    "expected_team": "Identity & Access",
-    "tests": "Explicit security breach / account takeover. The High-priority rubric names 'a security breach' directly, but none of tickets 1-20 exercise that specific trigger word-for-word"
+    "expected_team": "Security & Trust",
+    "expected_system_wide_outage": false,
+    "tests": "Explicit security breach / account takeover — a third party accessed the account, not the owner's own access trouble. Now resolves cleanly to the dedicated Security category/team instead of flip-flopping between Account Access and Billing as it did before Security existed. system_wide_outage must stay false: only this one account is affected, even though priority is High"
   },
   {
     "id": 22,
@@ -173,7 +178,8 @@
     "expected_category": "Bug Report",
     "expected_priority": "High",
     "expected_team": "Engineering",
-    "tests": "Explicit active data loss, the other named High-priority trigger in the rubric that tickets 1-20 don't exercise directly"
+    "expected_system_wide_outage": false,
+    "tests": "Explicit active data loss, the other named High-priority trigger in the rubric that tickets 1-20 don't exercise directly. system_wide_outage must stay false — this is one user's data, not a shared/many-user outage"
   },
   {
     "id": 23,
@@ -202,10 +208,11 @@
   {
     "id": 26,
     "ticket": "There's a charge on my account I never made. I think someone else has access — I'm considering involving my bank and legal counsel if this isn't resolved.",
-    "expected_category": "Account Access",
+    "expected_category": "Security",
     "expected_priority": "High",
-    "expected_team": "Identity & Access",
-    "tests": "Second, higher-stakes ambiguous case (Account Access vs Billing) paired with an explicit security/fraud angle and a legal-escalation threat. Reasoning should name Billing as the runner-up and explain why unauthorized-access is treated as the root cause"
+    "expected_team": "Security & Trust",
+    "expected_system_wide_outage": false,
+    "tests": "Fraud/account-compromise with a legal-escalation threat attached. Root cause (unauthorized access) is Security, not Billing (the charge is a symptom) and not Legal/Compliance (the legal mention is a consequence of the breach, not a standalone legal ask). Previously flip-flopped between Account Access and Billing before the Security category existed — now resolves cleanly. system_wide_outage stays false: one account, even though High"
   },
   {
     "id": 27,
@@ -269,6 +276,24 @@
     "expected_category": "Bug Report",
     "expected_priority": "High",
     "expected_team": "Engineering",
-    "tests": "Single user, but a business-critical process with a hard, stated deadline — High priority is driven by the stakes/deadline, not by the number of app users affected (still just one account). Reasoning must attribute this correctly ('blocks this user's payroll deadline') and must NOT hallucinate 'many users' or 'system-wide' language just because the priority is High. NOTE: category/team classification for this one is inconsistent (Bug Report/Engineering vs General Inquiry/Customer Success across runs) — a real, disclosed limitation, not yet fixed"
+    "tests": "Single user, but a business-critical process with a hard, stated deadline — High priority is driven by the stakes/deadline, not by the number of app users affected (still just one account). Reasoning must attribute this correctly ('blocks this user's payroll deadline') and must NOT hallucinate 'many users' or 'system-wide' language just because the priority is High. NOTE: category/team classification for this one is inconsistent (Bug Report/Engineering vs General Inquiry/Customer Success vs Account Access/Identity & Access across runs) — a real, disclosed limitation, not yet fixed. expected_system_wide_outage is false regardless: one account, one deadline"
+  },
+  {
+    "id": 35,
+    "ticket": "Under GDPR I am requesting you delete all my personal data from your systems within 30 days.",
+    "expected_category": "Legal/Compliance",
+    "expected_priority": "Medium",
+    "expected_team": "Legal & Compliance",
+    "expected_system_wide_outage": false,
+    "tests": "New category test: a standalone legal/regulatory request (GDPR data deletion) with no account compromise involved — must go to Legal/Compliance, not Security or Account Access. Priority Medium is defensible (a real, actionable legal deadline, but 30 days out, not an emergency)"
+  },
+  {
+    "id": 36,
+    "ticket": "I forgot my password and the reset email never arrived, can you resend it?",
+    "expected_category": "Account Access",
+    "expected_priority": "Medium",
+    "expected_team": "Identity & Access",
+    "expected_system_wide_outage": false,
+    "tests": "Contrast case for the new Security category: this is the account owner's OWN access trouble with no third party involved, so it must stay plain Account Access/Medium, not escalate to Security just because the topic is 'account access'-adjacent. Security is reserved for third-party/compromise language only (see tickets 21 and 26)"
   }
 ]

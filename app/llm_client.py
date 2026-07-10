@@ -12,6 +12,8 @@ ALLOWED_CATEGORIES = [
     "Feature Request",
     "Integration/API",
     "General Inquiry",
+    "Security",
+    "Legal/Compliance",
     "Unclassified",
 ]
 ALLOWED_PRIORITIES = ["High", "Medium", "Low"]
@@ -22,6 +24,8 @@ ALLOWED_TEAMS = [
     "Product",
     "Platform/API",
     "Customer Success",
+    "Security & Trust",
+    "Legal & Compliance",
     "Human Triage",
 ]
 
@@ -33,15 +37,30 @@ class LLMProviderError(RuntimeError):
 def _build_messages(ticket_text: str, repair_context: str = None, invalid_response: Any = None) -> list[dict[str, str]]:
     instructions = (
         "You are a support ticket router. Return only a single JSON object with the exact keys: "
-        "category, priority, assigned_team, reasoning, confidence, sla_hours, possible_duplicate_of. "
+        "category, priority, assigned_team, reasoning, confidence, sla_hours, possible_duplicate_of, "
+        "system_wide_outage. "
         "Do not include any other fields, IDs, timestamps, descriptions, or metadata. "
-        "Use one of the allowed categories exactly: Billing, Account Access, Bug Report, Feature Request, Integration/API, General Inquiry, or Unclassified. "
+        "Use one of the allowed categories exactly: Billing, Account Access, Bug Report, Feature Request, "
+        "Integration/API, General Inquiry, Security, Legal/Compliance, or Unclassified. "
         "Use one of the allowed priorities exactly: High, Medium, Low. "
-        "Use one of the allowed assigned teams exactly: Billing Ops, Identity & Access, Engineering, Product, Platform/API, Customer Success, or Human Triage. "
+        "Use one of the allowed assigned teams exactly: Billing Ops, Identity & Access, Engineering, Product, "
+        "Platform/API, Customer Success, Security & Trust, Legal & Compliance, or Human Triage. "
         "The assigned_team is determined ONLY by category, always exactly this mapping, never guessed case by case: "
         "Billing -> Billing Ops. Account Access -> Identity & Access. Bug Report -> Engineering. Feature Request -> "
-        "Product. Integration/API -> Platform/API. General Inquiry -> Customer Success. Unclassified -> Human "
-        "Triage. "
+        "Product. Integration/API -> Platform/API. General Inquiry -> Customer Success. Security -> Security & "
+        "Trust. Legal/Compliance -> Legal & Compliance. Unclassified -> Human Triage. "
+        "Category Security vs Account Access: use Security only when the ticket indicates someone OTHER than the "
+        "account owner gained or attempted access (account takeover, unrecognized device/login, unauthorized "
+        "changes to email/password, a stated 'security breach', or a charge the user says they never made because "
+        "they suspect their account was compromised). Use Account Access for the account owner's OWN normal "
+        "access problems (forgot password, reset not working, locked out) with no suggestion of a third party being "
+        "involved. Security is always High priority (it is an explicit High trigger on its own). "
+        "Category Legal/Compliance vs Security/Billing: use Legal/Compliance only when the ticket's primary ask IS "
+        "itself a legal/regulatory matter — a GDPR/CCPA data request, a ToS or consumer-protection complaint, a "
+        "subpoena or regulatory inquiry — with no account compromise involved. If a ticket is fundamentally a "
+        "security/fraud issue (unauthorized access or charge) and ALSO mentions involving a bank or lawyer as a "
+        "consequence, the root cause is still Security, not Legal/Compliance; only use Legal/Compliance when there "
+        "is no compromise, just a legal/regulatory ask on its own. "
         "Assign priority based on the actual scope, completeness, and duration of the impact described, never on tone "
         "or word choice by itself: "
         "High means a system-wide outage, an issue affecting many users at once, active data loss, a security breach, "
@@ -91,7 +110,12 @@ def _build_messages(ticket_text: str, repair_context: str = None, invalid_respon
         "like 'nothing works' or 'completely broken', not only narrow ones. A ticket has concrete content as long as "
         "it says what is failing, even vaguely; it only lacks concrete content when it is pure venting/insults with "
         "no description of any failure at all (e.g. 'broken' alone with zero elaboration, or 'THIS APP IS TRASH FIX "
-        "IT NOW!!!!1!' which insults the app but never says what is wrong with it). "
+        "IT NOW!!!!1!' which insults the app but never says what is wrong with it). A pronoun like 'it' still counts "
+        "as naming a failing thing — 'its down again, fix pls asap' says a specific thing (referred to as 'it') is "
+        "down AND that this has happened before, which is a description of a failure (Case A, Bug Report, "
+        "Engineering, Medium priority per the stakes rule above), even though the pronoun's exact referent is "
+        "unstated. Only the bare word alone with NOTHING else (no pronoun, no verb, no repetition, no context) like "
+        "just 'broken' by itself is Case B — do not extend Case B to every short message. "
         "Do not pattern-match on the word 'broken' or 'down' by itself — what matters is whether a specific thing is "
         "named as failing, not the word choice. 'my account is broken again, third time this month' names a specific "
         "thing (the account) and a pattern (recurring) — this IS concrete content (Case A, category Account Access "
@@ -124,8 +148,9 @@ def _build_messages(ticket_text: str, repair_context: str = None, invalid_respon
         "phrase) is present in the text — not merely because of punctuation, capitalization, or urgency words. "
         "Case A — ticket has concrete content (per the definition above): classify normally using the category and "
         "the High/Medium/Low scope-and-duration rubric above, regardless of tone, and ALWAYS assign a real category "
-        "and matching team (Billing Ops, Identity & Access, Engineering, Product, Platform/API, or Customer "
-        "Success) — never Unclassified/Human Triage in this case, even under an urgent-sounding priority. A broad "
+        "and matching team (Billing Ops, Identity & Access, Engineering, Product, Platform/API, Customer Success, "
+        "Security & Trust, or Legal & Compliance) — never Unclassified/Human Triage in this case, even under an "
+        "urgent-sounding priority. A broad "
         "'nothing works'/'everything is broken' claim about the product itself (with no billing, login, or feature "
         "request angle) defaults to category Bug Report, team Engineering. If anger signals are also present, keep "
         "the content-based category/priority/team and just add one sentence in reasoning noting the angry tone as "
@@ -147,6 +172,17 @@ def _build_messages(ticket_text: str, repair_context: str = None, invalid_respon
         "The confidence field should be a number between 0.0 and 1.0. "
         "The sla_hours field should be an integer. "
         "The possible_duplicate_of field should be null if there is no duplicate. "
+        "The system_wide_outage field is a boolean, true ONLY when the ticket explicitly says the failure affects "
+        "many people, everyone, the whole company/organization, or 'no one' can do something — words like "
+        "'everyone', 'no one', 'the whole team', or a named large group. It is false for every other ticket, "
+        "including single-user total-feature-failure tickets (e.g. 'the app crashes immediately for me, nothing "
+        "loads'), single-user data loss, security breaches on one account, and single-user severe-stakes tickets "
+        "(large dollar amount or business-critical deadline for just that one user) — those can still be High "
+        "priority, but system_wide_outage stays false because only one person is affected. Only 'Server is down "
+        "for everyone' or 'Production database is completely down, no one can process orders' style tickets, where "
+        "the text itself names a broad group rather than 'I'/'my', are true. When true, this makes the SLA response "
+        "window shorter than a normal High-priority ticket, since it means many people are blocked at once, not "
+        "just one — so only mark it true when the ticket text genuinely supports that, never speculatively. "
         "If the ticket is understandable but genuinely ambiguous between two categories, pick the closer match, "
         "keep confidence below 0.6, and say in reasoning which other category was considered. "
         "Return valid JSON only, with no surrounding markdown or commentary."

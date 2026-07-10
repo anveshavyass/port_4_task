@@ -13,6 +13,8 @@ class TicketRoute(BaseModel):
         "Feature Request",
         "Integration/API",
         "General Inquiry",
+        "Security",
+        "Legal/Compliance",
         "Unclassified",
     ]
     priority: Literal["High", "Medium", "Low"]
@@ -23,12 +25,15 @@ class TicketRoute(BaseModel):
         "Product",
         "Platform/API",
         "Customer Success",
+        "Security & Trust",
+        "Legal & Compliance",
         "Human Triage",
     ]
     reasoning: str = Field(min_length=10, max_length=280)
     confidence: float = Field(ge=0.0, le=1.0)
     sla_hours: int = Field(ge=1, le=500)
     possible_duplicate_of: Optional[str] = None
+    system_wide_outage: bool = False
 
     def to_dict(self) -> dict:
         return self.model_dump()

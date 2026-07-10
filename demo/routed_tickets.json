@@ -1,0 +1,202 @@
+[
+  {
+    "ticket_id": "95ca3cfa",
+    "ticket": "I can't log into my account, it says invalid password even though I reset it yesterday.",
+    "category": "Account Access",
+    "assigned_team": "Identity & Access",
+    "priority": "Medium",
+    "reasoning": "The user is unable to log into their account due to an invalid password error after attempting a reset, indicating a specific access issue that needs investigation.",
+    "sla_hours": 12,
+    "confidence": 0.9
+  },
+  {
+    "ticket_id": "1f86de4a",
+    "ticket": "Server is down for everyone, we are losing money every minute!!",
+    "category": "Bug Report",
+    "assigned_team": "Engineering",
+    "priority": "High (Critical)",
+    "reasoning": "The ticket indicates a server outage affecting everyone, which is causing significant financial loss.",
+    "sla_hours": 1,
+    "confidence": 1.0
+  },
+  {
+    "ticket_id": "f762a4c8",
+    "ticket": "This is RIDICULOUS, nothing works and I've been waiting 3 days!!!",
+    "category": "Bug Report",
+    "assigned_team": "Engineering",
+    "priority": "High",
+    "reasoning": "The ticket describes a complete failure where nothing works and indicates that the issue has persisted for 3 days, which qualifies it as High priority. The angry tone is noted due to the use of 'RIDICULOUS'.",
+    "sla_hours": 2,
+    "confidence": 0.8
+  },
+  {
+    "ticket_id": "1b9dbcbe",
+    "ticket": "broken",
+    "category": "Unclassified",
+    "assigned_team": "Human Triage",
+    "priority": "Low",
+    "reasoning": "No specific issue could be identified from the ticket content.",
+    "sla_hours": 24,
+    "confidence": 0.0
+  },
+  {
+    "ticket_id": "e758d9a8",
+    "ticket": "I was charged twice but now I also can't log in",
+    "category": "Account Access",
+    "assigned_team": "Identity & Access",
+    "priority": "Medium",
+    "reasoning": "The user is experiencing a login issue, which is a normal access problem. The duplicate charge does not meet the severe-stakes threshold for High priority.",
+    "sla_hours": 12,
+    "confidence": 0.8
+  },
+  {
+    "ticket_id": "f3045b3e",
+    "ticket": "wen fix bug plz its verry anoying and i cant acess my acount",
+    "category": "Account Access",
+    "assigned_team": "Identity & Access",
+    "priority": "Medium",
+    "reasoning": "The user is experiencing an access issue with their account, but there is no indication of a security breach or third-party involvement. The tone is casual and expresses annoyance, but does not affect the priority level.",
+    "sla_hours": 12,
+    "confidence": 0.8
+  },
+  {
+    "ticket_id": "dfba44d7",
+    "ticket": "No puedo iniciar sesi\u00f3n en mi cuenta, dice que la contrase\u00f1a es incorrecta aunque la acabo de restablecer.",
+    "category": "Account Access",
+    "assigned_team": "Identity & Access",
+    "priority": "Medium",
+    "reasoning": "The user cannot log in to their account because the password reset did not work, indicating a need for direct investigation.",
+    "sla_hours": 12,
+    "confidence": 0.9
+  },
+  {
+    "ticket_id": "a0f511ed",
+    "ticket": "THIS APP IS TRASH FIX IT NOW!!!!1!",
+    "category": "Unclassified",
+    "assigned_team": "Human Triage",
+    "priority": "High",
+    "reasoning": "No specific issue could be identified, but the angry tone means a human should follow up promptly.",
+    "sla_hours": 2,
+    "confidence": 0.0
+  },
+  {
+    "ticket_id": "98224e64",
+    "ticket": "asdkjfh qwoieru 12345 !!!",
+    "category": "Unclassified",
+    "assigned_team": "Human Triage",
+    "priority": "Low",
+    "reasoning": "No specific issue could be identified from the content provided.",
+    "sla_hours": 24,
+    "confidence": 0.0
+  },
+  {
+    "ticket_id": "25dd1029",
+    "ticket": "Hi team, just wondering if you plan to add dark mode soon? Not urgent at all, whenever you get a chance :)",
+    "category": "Feature Request",
+    "assigned_team": "Product",
+    "priority": "Low",
+    "reasoning": "The ticket is a general inquiry about a potential feature with no urgency expressed.",
+    "sla_hours": 24,
+    "confidence": 0.9
+  },
+  {
+    "ticket_id": "8a3e7281",
+    "ticket": "Getting error code 500 when calling /api/v2/orders endpoint intermittently since this morning",
+    "category": "Bug Report",
+    "assigned_team": "Engineering",
+    "priority": "Medium",
+    "reasoning": "The ticket describes an intermittent error when calling a specific API endpoint, which indicates a bug that needs investigation. However, it does not suggest a widespread issue affecting many users.",
+    "sla_hours": 12,
+    "confidence": 0.8
+  },
+  {
+    "ticket_id": "2e25e698",
+    "ticket": "My card ending in 4521 was billed $299 instead of $99, please refund the difference",
+    "category": "Billing",
+    "assigned_team": "Billing Ops",
+    "priority": "Medium",
+    "reasoning": "This is a routine billing error with a charge below the severe-stakes threshold, so it remains Medium priority.",
+    "sla_hours": 12,
+    "confidence": 0.9
+  },
+  {
+    "ticket_id": "b1cdf962",
+    "ticket": "The app crashes immediately when I open it \u2014 nothing loads, just a white screen",
+    "category": "Bug Report",
+    "assigned_team": "Engineering",
+    "priority": "High",
+    "reasoning": "The app crashes immediately upon opening, indicating a total failure of the application for the user.",
+    "sla_hours": 2,
+    "confidence": 0.9
+  },
+  {
+    "ticket_id": "2eacf381",
+    "ticket": "Can someone walk me through how to export my report as PDF? Don't want to mess anything up.",
+    "category": "General Inquiry",
+    "assigned_team": "Customer Success",
+    "priority": "Low",
+    "reasoning": "The ticket is a request for assistance with exporting a report, which is a general inquiry and not urgent.",
+    "sla_hours": 24,
+    "confidence": 0.9
+  },
+  {
+    "ticket_id": "c6d08d10",
+    "ticket": "Production database is completely down, no one can process orders",
+    "category": "Bug Report",
+    "assigned_team": "Engineering",
+    "priority": "High (Critical)",
+    "reasoning": "The ticket indicates a complete failure of the production database affecting all users, which qualifies as a high priority issue.",
+    "sla_hours": 1,
+    "confidence": 1.0
+  },
+  {
+    "ticket_id": "7f4e0aa5",
+    "ticket": "There's a typo in the footer \u2014 copyright year still says 2023",
+    "category": "Feature Request",
+    "assigned_team": "Product",
+    "priority": "Low",
+    "reasoning": "The ticket reports a minor cosmetic issue regarding a typo in the footer, which does not indicate urgency or a significant impact.",
+    "sla_hours": 24,
+    "confidence": 0.9
+  },
+  {
+    "ticket_id": "b8ef5c16",
+    "ticket": "Someone logged into my account from a device I don't recognize and changed my email and password \u2014 I can't get back in.",
+    "category": "Security",
+    "assigned_team": "Security & Trust",
+    "priority": "High",
+    "reasoning": "The ticket indicates unauthorized access to the account, which constitutes a security breach.",
+    "sla_hours": 2,
+    "confidence": 1.0
+  },
+  {
+    "ticket_id": "8d5c49e0",
+    "ticket": "There's a charge on my account I never made. I think someone else has access \u2014 I'm considering involving my bank and legal counsel if this isn't resolved.",
+    "category": "Security",
+    "assigned_team": "Security & Trust",
+    "priority": "High",
+    "reasoning": "The ticket indicates a potential unauthorized access to the account, which raises security concerns. The user suspects someone else has access and is considering involving their bank and legal counsel, which emphasizes the severity of the situation.",
+    "sla_hours": 2,
+    "confidence": 0.9
+  },
+  {
+    "ticket_id": "8996a125",
+    "ticket": "Under GDPR I am requesting you delete all my personal data from your systems within 30 days.",
+    "category": "Legal/Compliance",
+    "assigned_team": "Legal & Compliance",
+    "priority": "Medium",
+    "reasoning": "The ticket is a request for data deletion under GDPR, which is a legal/regulatory matter. It does not indicate any account compromise or security issue.",
+    "sla_hours": 12,
+    "confidence": 0.8
+  },
+  {
+    "ticket_id": "91600afc",
+    "ticket": "My card was charged $24,750 instead of $247 for my subscription renewal, please refund the difference.",
+    "category": "Billing",
+    "assigned_team": "Billing Ops",
+    "priority": "High",
+    "reasoning": "The ticket describes a significant billing error with a charge of $24,750, which is above the $1,000 severe-stakes threshold, necessitating immediate attention.",
+    "sla_hours": 2,
+    "confidence": 1.0
+  }
+]

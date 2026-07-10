@@ -51,6 +51,7 @@ def _classify_with_llm(ticket_text: str, schema: dict[str, Any]) -> tuple[dict[s
                     "assigned_team": "Human Triage",
                     "reasoning": "Routing failed and the ticket requires human review.",
                     "confidence": 0.0,
+                    "system_wide_outage": False,
                     "provider": "openai",
                     "provider_error": str(exc),
                 }, "fallback"
@@ -61,6 +62,7 @@ def _classify_with_llm(ticket_text: str, schema: dict[str, Any]) -> tuple[dict[s
             "assigned_team": "Human Triage",
             "reasoning": "The configured LLM provider is unavailable. Please check your OpenAI API key and try again.",
             "confidence": 0.0,
+            "system_wide_outage": False,
             "provider": "openai",
             "provider_error": str(exc),
         }, "fallback"
@@ -79,6 +81,7 @@ def route_ticket(ticket_text: str) -> dict[str, Any]:
             "confidence": 0.0,
             "sla_hours": compute_sla_hours("Low"),
             "possible_duplicate_of": None,
+            "system_wide_outage": False,
         }
 
     start = time.perf_counter()
@@ -89,7 +92,7 @@ def route_ticket(ticket_text: str) -> dict[str, Any]:
     result = {
         "ticket_id": ticket_id,
         **llm_result,
-        "sla_hours": compute_sla_hours(llm_result["priority"]),
+        "sla_hours": compute_sla_hours(llm_result["priority"], llm_result.get("system_wide_outage", False)),
         "possible_duplicate_of": None,
     }
     duplicate = find_duplicate_ticket(ticket_text)

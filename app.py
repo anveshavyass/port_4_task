@@ -1,7 +1,61 @@
+import csv
+import io
+import json
+import time
+
 import streamlit as st
 
-from app.analytics import build_stats, is_ticket_corrected, is_ticket_resolved, log_correction, record_resolution
+from app.analytics import (
+    build_stats,
+    is_ticket_corrected,
+    is_ticket_escalated,
+    is_ticket_resolved,
+    log_correction,
+    record_escalation,
+    record_resolution,
+)
 from app.router import route_ticket
+
+
+def _parse_uploaded_tickets(uploaded_file) -> list[str]:
+    raw = uploaded_file.read()
+    name = uploaded_file.name.lower()
+    texts = []
+    if name.endswith(".json"):
+        data = json.loads(raw.decode("utf-8"))
+        items = data if isinstance(data, list) else [data]
+        for item in items:
+            if isinstance(item, str):
+                if item.strip():
+                    texts.append(item)
+            elif isinstance(item, dict):
+                text = item.get("ticket") or item.get("text") or item.get("message")
+                if text and str(text).strip():
+                    texts.append(str(text))
+    else:
+        reader = csv.DictReader(io.StringIO(raw.decode("utf-8")))
+        fieldnames = reader.fieldnames or []
+        text_field = next(
+            (fn for fn in fieldnames if fn.strip().lower() in ("ticket", "text", "message")),
+            fieldnames[0] if fieldnames else None,
+        )
+        if text_field:
+            for row in reader:
+                value = (row.get(text_field) or "").strip()
+                if value:
+                    texts.append(value)
+    return texts
+
+
+def _rows_to_csv(rows: list[dict]) -> str:
+    if not rows:
+        return ""
+    output = io.StringIO()
+    writer = csv.DictWriter(output, fieldnames=list(rows[0].keys()))
+    writer.writeheader()
+    writer.writerows(rows)
+    return output.getvalue()
+
 
 st.set_page_config(page_title="Routely — Smart Ticket Router", page_icon="🧾", layout="wide")
 
@@ -34,11 +88,23 @@ st.markdown(
     .badge-med { background:#f59e0b; color:#071120; padding:6px 14px; border-radius:14px; font-weight:700; font-size:0.95rem; }
     .badge-low { background:#34d399; color:#071120; padding:6px 14px; border-radius:14px; font-weight:700; font-size:0.95rem; }
 
+    /* Critical / system-wide-outage tag — deliberately a new color (violet), never used for anything else,
+       so it always reads as "one tier above ordinary High" at a glance */
+    .critical-tag {
+        display:inline-flex; align-items:center; gap:8px;
+        background:#7c3aed; color:#ffffff; padding:8px 16px; border-radius:10px;
+        font-weight:800; font-size:1rem; letter-spacing:0.02em;
+        border:1px solid rgba(255,255,255,0.25);
+        box-shadow:0 0 0 3px rgba(124,58,237,0.25);
+        margin-bottom:0.75rem;
+    }
+
     /* Legend chips */
     .legend-chip { display:inline-block; width:16px; height:16px; border-radius:6px; margin-right:8px; vertical-align:middle; }
     .legend-high { background:#dc2626; }
     .legend-med { background:#f59e0b; }
     .legend-low { background:#22c55e; }
+    .legend-critical { background:#7c3aed; }
     
     /* Result card styling */
     .result-card.match { border: 2px solid rgba(52,211,153,0.95); box-shadow: 0 30px 60px rgba(52,211,153,0.06); background: linear-gradient(180deg, rgba(8,20,38,0.6) 0%, rgba(8,20,38,0.85) 100%) !important; }
@@ -83,6 +149,7 @@ with st.sidebar:
     st.markdown(
         """
         <div style='display:flex; flex-direction:column; gap:10px;'>
+            <div><span class='legend-chip legend-critical'></span>Critical</div>
             <div><span class='legend-chip legend-high'></span>High priority</div>
             <div><span class='legend-chip legend-med'></span>Medium priority</div>
             <div><span class='legend-chip legend-low'></span>Low priority</div>
@@ -106,6 +173,8 @@ with st.sidebar:
         "Feature Request",
         "Integration/API",
         "General Inquiry",
+        "Security",
+        "Legal/Compliance",
         "Unclassified",
     ]
     teams = [
@@ -116,6 +185,8 @@ with st.sidebar:
         "Product",
         "Platform/API",
         "Customer Success",
+        "Security & Trust",
+        "Legal & Compliance",
         "Human Triage",
     ]
     selected_category = st.selectbox("Show category", categories)
@@ -148,6 +219,12 @@ if result:
 
     card_class = "result-card match" if overall_match else "result-card dim"
 
+    if result.get("priority") == "High" and result.get("system_wide_outage"):
+        st.markdown(
+            "<div class='critical-tag'>⚠ CRITICAL — SYSTEM-WIDE OUTAGE</div>",
+            unsafe_allow_html=True,
+        )
+
     st.markdown(f"<div class='{card_class}'>", unsafe_allow_html=True)
     st.markdown(f"<div class='result-title'>Category: {result['category']}</div>", unsafe_allow_html=True)
 
@@ -169,9 +246,10 @@ if result:
     st.markdown("</div>", unsafe_allow_html=True)
 
     already_resolved = is_ticket_resolved(result["ticket_id"])
+    already_escalated = is_ticket_escalated(result["ticket_id"])
     already_corrected = is_ticket_corrected(result["ticket_id"])
 
-    col1, col2 = st.columns([1, 1])
+    col1, col_escalate, col2 = st.columns([1, 1, 1])
     with col1:
         if st.button("Mark Resolved", disabled=already_resolved):
             if record_resolution(result["ticket_id"]):
@@ -179,6 +257,13 @@ if result:
                 st.rerun()
         if already_resolved:
             st.caption("Already marked resolved.")
+    with col_escalate:
+        if st.button("Escalate", disabled=already_escalated):
+            if record_escalation(result["ticket_id"], result):
+                st.write("Escalated for immediate human follow-up")
+                st.rerun()
+        if already_escalated:
+            st.caption("Already escalated.")
     with col2:
         corrected_category = st.selectbox(
             "Correct category",
@@ -195,4 +280,65 @@ if result:
 
     with st.expander("Show raw JSON"):
         st.json(result)
+
+st.markdown("---")
+st.subheader("Batch Routing")
+st.caption("Upload a CSV or JSON file of tickets and route all of them at once.")
+
+uploaded_file = st.file_uploader(
+    "Upload tickets (CSV needs a 'ticket' column; JSON is a list of strings or objects with a 'ticket' field)",
+    type=["csv", "json"],
+)
+
+if uploaded_file is not None and st.button("Route All Tickets"):
+    ticket_texts = _parse_uploaded_tickets(uploaded_file)
+    if not ticket_texts:
+        st.error("No ticket text found in the uploaded file.")
+    else:
+        start = time.perf_counter()
+        batch = [{"ticket": text, **route_ticket(text)} for text in ticket_texts]
+        elapsed = time.perf_counter() - start
+        st.session_state["batch_results"] = batch
+        st.session_state["batch_elapsed"] = elapsed
+        st.rerun()
+
+batch_results = st.session_state.get("batch_results")
+if batch_results:
+    elapsed = st.session_state.get("batch_elapsed", 0.0)
+    st.success(
+        f"Routed {len(batch_results)} tickets in {elapsed:.2f}s "
+        f"({elapsed / len(batch_results):.2f}s/ticket average)."
+    )
+    
+
+    display_rows = []
+    for r in batch_results:
+        priority_display = r["priority"]
+        if r["priority"] == "High" and r.get("system_wide_outage"):
+            priority_display = f"{r['priority']} (Critical)"
+        display_rows.append(
+            {
+                "ticket_id": r["ticket_id"],
+                "ticket": r["ticket"],
+                "category": r["category"],
+                "assigned_team": r["assigned_team"],
+                "priority": priority_display,
+                "reasoning": r["reasoning"],
+                "sla_hours": r["sla_hours"],
+                "confidence": r["confidence"],
+            }
+        )
+
+    st.dataframe(display_rows, use_container_width=True)
+
+    csv_data = _rows_to_csv(display_rows)
+    json_data = json.dumps(display_rows, indent=2)
+
+    dl_col1, dl_col2 = st.columns(2)
+    with dl_col1:
+        st.download_button("Download as CSV", data=csv_data, file_name="routed_tickets.csv", mime="text/csv")
+    with dl_col2:
+        st.download_button(
+            "Download as JSON", data=json_data, file_name="routed_tickets.json", mime="application/json"
+        )
 

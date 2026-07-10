@@ -9,6 +9,7 @@ from app.config import (
     CORRECTIONS_LOG_PATH,
     DUPLICATE_LOOKBACK_HOURS,
     DUPLICATE_SIMILARITY_THRESHOLD,
+    ESCALATIONS_LOG_PATH,
     REQUEST_LOG_PATH,
     RESOLUTIONS_LOG_PATH,
     SLA_HOURS,
@@ -56,7 +57,9 @@ def normalize_text(value: str) -> str:
     return " ".join((value or "").lower().split())
 
 
-def compute_sla_hours(priority: str) -> int:
+def compute_sla_hours(priority: str, system_wide_outage: bool = False) -> int:
+    if priority == "High" and system_wide_outage:
+        return int(SLA_HOURS.get("Critical", 1))
     return int(SLA_HOURS.get(priority, 8))
 
 
@@ -108,6 +111,12 @@ def is_ticket_resolved(ticket_id: Optional[str]) -> bool:
     return any(entry.get("ticket_id") == ticket_id for entry in load_jsonl(RESOLUTIONS_LOG_PATH))
 
 
+def is_ticket_escalated(ticket_id: Optional[str]) -> bool:
+    if not ticket_id:
+        return False
+    return any(entry.get("ticket_id") == ticket_id for entry in load_jsonl(ESCALATIONS_LOG_PATH))
+
+
 def log_correction(ticket_id: str, corrected_category: str, original_result: dict[str, Any], reason: str = "") -> bool:
     if is_ticket_corrected(ticket_id):
         return False
@@ -119,6 +128,18 @@ def log_correction(ticket_id: str, corrected_category: str, original_result: dic
         "reason": reason,
     }
     append_jsonl(CORRECTIONS_LOG_PATH, entry)
+    return True
+
+
+def record_escalation(ticket_id: str, original_result: Optional[dict[str, Any]] = None) -> bool:
+    if is_ticket_escalated(ticket_id):
+        return False
+    entry = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "ticket_id": ticket_id,
+        "original_result": original_result or {},
+    }
+    append_jsonl(ESCALATIONS_LOG_PATH, entry)
     return True
 
 
@@ -159,7 +180,10 @@ def build_stats() -> dict[str, Any]:
         timestamp = parse_timestamp(entry.get("timestamp"))
         if not timestamp:
             continue
-        sla_hours = output.get("sla_hours", compute_sla_hours(output.get("priority", "Medium")))
+        sla_hours = output.get(
+            "sla_hours",
+            compute_sla_hours(output.get("priority", "Medium"), output.get("system_wide_outage", False)),
+        )
         if now - timestamp > timedelta(hours=sla_hours):
             overdue_count += 1
 

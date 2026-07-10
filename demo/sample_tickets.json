@@ -1,0 +1,22 @@
+[
+  { "id": 1, "ticket": "I can't log into my account, it says invalid password even though I reset it yesterday." },
+  { "id": 2, "ticket": "Server is down for everyone, we are losing money every minute!!" },
+  { "id": 3, "ticket": "This is RIDICULOUS, nothing works and I've been waiting 3 days!!!" },
+  { "id": 4, "ticket": "broken" },
+  { "id": 5, "ticket": "I was charged twice but now I also can't log in" },
+  { "id": 6, "ticket": "wen fix bug plz its verry anoying and i cant acess my acount" },
+  { "id": 7, "ticket": "No puedo iniciar sesión en mi cuenta, dice que la contraseña es incorrecta aunque la acabo de restablecer." },
+  { "id": 8, "ticket": "THIS APP IS TRASH FIX IT NOW!!!!1!" },
+  { "id": 9, "ticket": "asdkjfh qwoieru 12345 !!!" },
+  { "id": 10, "ticket": "Hi team, just wondering if you plan to add dark mode soon? Not urgent at all, whenever you get a chance :)" },
+  { "id": 11, "ticket": "Getting error code 500 when calling /api/v2/orders endpoint intermittently since this morning" },
+  { "id": 12, "ticket": "My card ending in 4521 was billed $299 instead of $99, please refund the difference" },
+  { "id": 13, "ticket": "The app crashes immediately when I open it — nothing loads, just a white screen" },
+  { "id": 14, "ticket": "Can someone walk me through how to export my report as PDF? Don't want to mess anything up." },
+  { "id": 15, "ticket": "Production database is completely down, no one can process orders" },
+  { "id": 16, "ticket": "There's a typo in the footer — copyright year still says 2023" },
+  { "id": 17, "ticket": "Someone logged into my account from a device I don't recognize and changed my email and password — I can't get back in." },
+  { "id": 18, "ticket": "There's a charge on my account I never made. I think someone else has access — I'm considering involving my bank and legal counsel if this isn't resolved." },
+  { "id": 19, "ticket": "Under GDPR I am requesting you delete all my personal data from your systems within 30 days." },
+  { "id": 20, "ticket": "My card was charged $24,750 instead of $247 for my subscription renewal, please refund the difference." }
+]
