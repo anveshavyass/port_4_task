@@ -4,9 +4,8 @@ from typing import Any
 
 from app.analytics import compute_sla_hours, find_duplicate_ticket
 from app.logger import log_request, make_log_entry
-from app.ollama_client import LLMProviderError, call_model, repair_route
+from app.llm_client import LLMProviderError, call_model, repair_route
 from app.schema import TicketRoute
-from app.config import ROUTER_PROVIDER
 
 
 def build_schema() -> dict[str, Any]:
@@ -52,7 +51,7 @@ def _classify_with_llm(ticket_text: str, schema: dict[str, Any]) -> tuple[dict[s
                     "assigned_team": "Human Triage",
                     "reasoning": "Routing failed and the ticket requires human review.",
                     "confidence": 0.0,
-                    "provider": ROUTER_PROVIDER,
+                    "provider": "openai",
                     "provider_error": str(exc),
                 }, "fallback"
     except LLMProviderError as exc:
@@ -60,9 +59,9 @@ def _classify_with_llm(ticket_text: str, schema: dict[str, Any]) -> tuple[dict[s
             "category": "Unclassified",
             "priority": "Low",
             "assigned_team": "Human Triage",
-            "reasoning": "The configured LLM provider is unavailable. Please check your local Ollama service or Groq API key and try again.",
+            "reasoning": "The configured LLM provider is unavailable. Please check your OpenAI API key and try again.",
             "confidence": 0.0,
-            "provider": ROUTER_PROVIDER,
+            "provider": "openai",
             "provider_error": str(exc),
         }, "fallback"
 

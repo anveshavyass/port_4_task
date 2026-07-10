@@ -4,12 +4,11 @@ A local-first support ticket router built with Python, FastAPI-style service str
 
 ## Setup
 
-1. Install Ollama and pull a model such as `llama3.2:latest`.
-2. Create a Python environment and install dependencies:
+1. Create a Python environment and install dependencies:
    ```bash
    pip install -r requirements.txt
    ```
-3. Create a `.env` file in the project root with your configuration (see `app/config.py` for the supported keys, e.g. `OLLAMA_HOST`, `MODEL_NAME`, `ROUTER_PROVIDER`, `GROQ_API_KEY`, `GROQ_MODEL`).
+2. Create a `.env` file in the project root with your configuration (see `app/config.py` for the supported keys, e.g. `OPENAI_API_KEY`, `OPENAI_MODEL`).
 
 ## Run
 
@@ -29,4 +28,4 @@ The routing flow uses a fast keyword-based path first and falls back to the LLM-
 ## Notes
 
 - The project uses environment-based configuration and avoids hardcoded secrets.
-- The router returns a safe fallback when the local model is unavailable or validation fails.
+- The router returns a safe fallback when the OpenAI API is unavailable or validation fails.

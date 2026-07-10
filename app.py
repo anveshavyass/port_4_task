@@ -93,7 +93,7 @@ with st.sidebar:
 
     stats = build_stats()
     st.metric("Tickets routed", stats.get("total", 0))
-    st.metric("Avg latency", f"{stats.get('avg_latency_ms', 0):.1f} ms")
+    st.metric("Avg latency", f"{stats.get('avg_latency_ms', 0) / 1000:.2f} s")
     st.metric("Fallback / Error rate", f"{stats.get('fallback_rate_pct', 0):.1f}%")
     st.metric("Correction rate", f"{stats.get('correction_rate_pct', 0):.1f}%")
     st.metric("Overdue (SLA)", stats.get("overdue_count", 0))

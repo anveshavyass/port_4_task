@@ -3,120 +3,272 @@
     "id": 1,
     "ticket": "I can't log into my account, it says invalid password even though I reset it yesterday.",
     "expected_category": "Account Access",
-    "expected_priority": "Medium"
+    "expected_priority": "Medium",
+    "expected_team": "Identity & Access",
+    "tests": "Normal, clear single-issue case. NOTE: the ticket text says the reset was ALREADY tried and still failed, so this is a workaround-exhausted case, not a workaround-available case — reasoning must say the standard fix was tried and didn't work, never that 'a workaround is possible'. Was a live bug (model claimed a workaround existed), fixed in app/llm_client.py's Medium definition"
   },
   {
     "id": 2,
     "ticket": "Server is down for everyone, we are losing money every minute!!",
     "expected_category": "Bug Report",
-    "expected_priority": "High"
+    "expected_priority": "High",
+    "expected_team": "Engineering",
+    "tests": "Known-High severity, unambiguous system-wide outage (M4S6 defensibility)"
   },
   {
     "id": 3,
     "ticket": "This is RIDICULOUS, nothing works and I've been waiting 3 days!!!",
     "expected_category": "Bug Report",
-    "expected_priority": "High"
+    "expected_priority": "High",
+    "expected_team": "Engineering",
+    "tests": "MANDATED edge case: angry tone. Category/priority driven by substance (broad failure + multi-day), tone only noted in reasoning, never overrides classification"
   },
   {
     "id": 4,
     "ticket": "broken",
     "expected_category": "Unclassified",
-    "expected_priority": "Low"
+    "expected_priority": "Low",
+    "expected_team": "Human Triage",
+    "tests": "MANDATED edge case: very short/vague message. No anger signal, no concrete content -> graceful fallback, not a crash or a wild guess"
   },
   {
     "id": 5,
     "ticket": "I was charged twice but now I also can't log in",
     "expected_category": "Billing",
-    "expected_priority": "Medium"
+    "expected_priority": "Medium",
+    "expected_team": "Billing Ops",
+    "tests": "MANDATED edge case: ambiguous ticket (fits Billing and Account Access). Reasoning must name the runner-up category and the tiebreaker"
   },
   {
     "id": 6,
-    "ticket": "wen fix bug plz its verry anoying and i cant acess my acount",
-    "expected_category": "Bug Report",
-    "expected_priority": "Medium"
+    "ticket": "",
+    "expected_category": "Unclassified",
+    "expected_priority": "Low",
+    "expected_team": "Human Triage",
+    "tests": "Empty input. Must be rejected by application code before ever reaching the LLM (see router.py's blank-input check)"
   },
   {
     "id": 7,
-    "ticket": "",
-    "expected_category": "Unclassified",
-    "expected_priority": "Low"
+    "ticket": "wen fix bug plz its verry anoying and i cant acess my acount",
+    "expected_category": "Account Access",
+    "expected_priority": "Medium",
+    "expected_team": "Identity & Access",
+    "tests": "Heavy typos/spelling and no punctuation, but one concrete, specific issue underneath (account access) should still be classified correctly"
   },
   {
     "id": 8,
-    "ticket": "Hi support team, I don't really know where to start because I've got a few things going on and none of them are urgent enough on their own to email separately but together they're driving me a little crazy. First and mainly, the app has been crashing on me pretty often over the last week or so, not every single time I open it, maybe one out of every four or five launches, but when it happens the screen just goes completely white and freezes for a few seconds before the whole thing closes on its own. I've tried restarting my phone, reinstalling the app, and clearing the cache, all the usual troubleshooting steps, and it still happens intermittently, which honestly makes it worse because I can never predict when it is going to happen, sometimes right in the middle of typing up a report. Second, and separately, I noticed on my last statement that I was charged twice for my monthly subscription, once on the 3rd and again on the 5th, same amount, same card ending in 7788, and I am hoping someone can look into that and refund the duplicate charge whenever you get a chance, no huge rush since I know these things take a few days to sort out. And third, kind of a random one but since I am already writing in, is there any chance dark mode is coming soon? I use the app a lot late at night and the bright white screens, when it is not crashing, are pretty rough on the eyes at that point. Not a big deal at all if it is not on the roadmap, just curious. Anyway, I would say the crashing is the one that actually needs looking at soonest since it is affecting how I use the app day to day, the billing thing is more of a fix when convenient, and the dark mode thing is just a nice to have wishlist item. Let me know if you need more details on any of these, happy to send screenshots of the crash or the billing statement if that helps.",
+    "ticket": "Hi support team, I don't really know where to start because I've got a few things going on. First and mainly, the app has been crashing on me pretty often over the last week, maybe one out of every four or five launches — the screen goes white and freezes before it closes on its own. I've tried restarting my phone, reinstalling, and clearing the cache, and it still happens. Second, I noticed I was charged twice for my monthly subscription, once on the 3rd and again on the 5th, same card ending 7788 — no huge rush on that one. Third, kind of random, is dark mode coming soon? Not a big deal if not. I'd say the crashing is the one that actually needs looking at soonest since it affects how I use the app daily; the billing thing is a fix-when-convenient; dark mode is just a wishlist item.",
     "expected_category": "Bug Report",
-    "expected_priority": "Medium"
+    "expected_priority": "Medium",
+    "expected_team": "Engineering",
+    "tests": "Very long, rambling message describing three unrelated issues at once. Must pick the single dominant issue (the user even ranks them) and mention the others briefly in reasoning, not average the priorities together"
   },
   {
     "id": 9,
-    "ticket": "¿Por qué no puedo acceder a mi cuenta?",
-    "expected_category": "Unclassified",
-    "expected_priority": "Low"
+    "ticket": "No puedo iniciar sesión en mi cuenta, dice que la contraseña es incorrecta aunque la acabo de restablecer.",
+    "expected_category": "Account Access",
+    "expected_priority": "Medium",
+    "expected_team": "Identity & Access",
+    "tests": "Non-English input (Spanish) with clear, translatable content. Should be classified by content, not defaulted to Unclassified just because it isn't English — flag as an M4A4 discussion point since reliability on non-English input is a real limitation to call out honestly"
   },
   {
     "id": 10,
     "ticket": "THIS APP IS TRASH FIX IT NOW!!!!1!",
     "expected_category": "Unclassified",
-    "expected_priority": "Low"
+    "expected_priority": "High",
+    "expected_team": "Human Triage",
+    "tests": "All-caps insult with zero description of what's actually wrong. Per the implemented prompt rule (llm_client.py), no-concrete-content + anger signals present = Unclassified/Human Triage but priority High (not Low) so an angry, contentless ticket still gets prompt human follow-up. NOTE: an earlier version of this fixture incorrectly expected Low here — corrected to match the actual implemented logic"
   },
   {
     "id": 11,
     "ticket": "asdkjfh qwoieru 12345 !!!",
     "expected_category": "Unclassified",
-    "expected_priority": "Low"
+    "expected_priority": "Low",
+    "expected_team": "Human Triage",
+    "tests": "Nonsense/spam input, no real content and no genuine anger. The anger-signal rule explicitly excludes gibberish/keyboard-mashing even when punctuated with '!!!'. CONFIRMED FLAKY even at temperature=0: repeated live runs of this exact input returned Low most of the time but occasionally High — a real, disclosed model-consistency limitation (M4B1), not something further prompt wording fully eliminates"
   },
   {
     "id": 12,
     "ticket": "Hi team, just wondering if you plan to add dark mode soon? Not urgent at all, whenever you get a chance :)",
     "expected_category": "Feature Request",
-    "expected_priority": "Low"
+    "expected_priority": "Low",
+    "expected_team": "Product",
+    "tests": "Known-Low severity, polite tone, explicit request (M4S6 defensibility)"
   },
   {
     "id": 13,
     "ticket": "Getting error code 500 when calling /api/v2/orders endpoint intermittently since this morning",
     "expected_category": "Integration/API",
-    "expected_priority": "Medium"
+    "expected_priority": "Medium",
+    "expected_team": "Platform/API",
+    "tests": "Technical/developer jargon, intermittent single-endpoint issue starting today (not multi-day, not system-wide). CONFIRMED FLAKY: repeated live runs alternated between Integration/API/Medium/Platform/API (correct) and Bug Report/High/Engineering (over-escalated) for the exact same input — a real consistency gap worth showing the mentor rather than hiding"
   },
   {
     "id": 14,
     "ticket": "My card ending in 4521 was billed $299 instead of $99, please refund the difference",
     "expected_category": "Billing",
-    "expected_priority": "Medium"
+    "expected_priority": "Medium",
+    "expected_team": "Billing Ops",
+    "tests": "Sensitive data present (partial card number). Ticket itself only exposes last 4 digits — checks that logging/reasoning never echoes more than that back"
   },
   {
     "id": 15,
     "ticket": "The app crashes immediately when I open it — nothing loads, just a white screen",
     "expected_category": "Bug Report",
-    "expected_priority": "High"
+    "expected_priority": "High",
+    "expected_team": "Engineering",
+    "tests": "Clear, unambiguous bug: total failure for this user (app is completely unusable), no ambiguity between categories"
   },
   {
     "id": 16,
     "ticket": "Can someone walk me through how to export my report as PDF? Don't want to mess anything up.",
     "expected_category": "General Inquiry",
-    "expected_priority": "Low"
+    "expected_priority": "Low",
+    "expected_team": "Customer Success",
+    "tests": "Known-Low severity, calm how-to question, no bug or billing angle (M4S6 defensibility)"
   },
   {
     "id": 17,
     "ticket": "🙂🙂 idk it's just kinda weird lol app doing weird stuff",
     "expected_category": "Unclassified",
-    "expected_priority": "Low"
+    "expected_priority": "Low",
+    "expected_team": "Human Triage",
+    "tests": "Vague + emoji + informal tone, no anger signals. 'weird stuff' names no concrete failure, so it should lean Unclassified/Human Triage rather than a guessed category — a genuinely borderline case worth discussing live with the mentor"
   },
   {
     "id": 18,
     "ticket": "Production database is completely down, no one can process orders",
     "expected_category": "Bug Report",
-    "expected_priority": "High"
+    "expected_priority": "High",
+    "expected_team": "Engineering",
+    "tests": "Known-High severity, unambiguous total outage affecting everyone (M4S6 defensibility)"
   },
   {
     "id": 19,
     "ticket": "There's a typo in the footer — copyright year still says 2023",
     "expected_category": "Bug Report",
-    "expected_priority": "Low"
+    "expected_priority": "Low",
+    "expected_team": "Engineering",
+    "tests": "Known-Low severity, unambiguous cosmetic bug — still a bug, but explicitly Low priority by rule, not Medium (M4S6 defensibility). Category has been observed to drift between Bug Report and Feature Request across runs (a cosmetic fix reads as either 'a bug' or 'a change request' to the model) — priority stays correctly Low either way; disclosed limitation, not yet fixed"
   },
   {
     "id": 20,
     "ticket": "Payment gateway intermittently fails for about 5% of transactions since last night",
     "expected_category": "Billing",
-    "expected_priority": "Medium"
+    "expected_priority": "Medium",
+    "expected_team": "Billing Ops",
+    "tests": "Known-Medium severity, partial/intermittent impact since last night (not total failure, not multi-day). Genuinely borderline between Billing and Integration/API — reasoning should be checked for whether it acknowledges that (M4S6 + M4S5-style ambiguity). Also observed flaky across runs, occasionally over-escalating to High — same consistency caveat as tickets 11 and 13"
+  },
+  {
+    "id": 21,
+    "ticket": "Someone logged into my account from a device I don't recognize and changed my email and password — I can't get back in.",
+    "expected_category": "Account Access",
+    "expected_priority": "High",
+    "expected_team": "Identity & Access",
+    "tests": "Explicit security breach / account takeover. The High-priority rubric names 'a security breach' directly, but none of tickets 1-20 exercise that specific trigger word-for-word"
+  },
+  {
+    "id": 22,
+    "ticket": "All my saved reports disappeared after the last update — I can't find any of them anywhere, on any device.",
+    "expected_category": "Bug Report",
+    "expected_priority": "High",
+    "expected_team": "Engineering",
+    "tests": "Explicit active data loss, the other named High-priority trigger in the rubric that tickets 1-20 don't exercise directly"
+  },
+  {
+    "id": 23,
+    "ticket": "Refund please, billed twice this month.",
+    "expected_category": "Billing",
+    "expected_priority": "Medium",
+    "expected_team": "Billing Ops",
+    "tests": "Short but NOT vague — contrast with ticket 4 ('broken'). Checks the model distinguishes brevity-with-specific-content from brevity-with-no-content instead of routing every short message to Unclassified"
+  },
+  {
+    "id": 24,
+    "ticket": "URGENT!!! how do I change my profile picture",
+    "expected_category": "General Inquiry",
+    "expected_priority": "Low",
+    "expected_team": "Customer Success",
+    "tests": "Claimed/false urgency — the word 'URGENT' and caps/exclamation marks are present, but the actual request is a trivial how-to with no real scope or duration. Priority must be driven by actual impact, not the user's own urgency claim. NOTE: this ticket caught two real prompt bugs during testing (urgent tone was making the model both misclassify as Unclassified and inflate priority to High) — both were fixed in app/llm_client.py and reverified live"
+  },
+  {
+    "id": 25,
+    "ticket": "Oh wonderful, my account is broken again, third time this month. Really great service.",
+    "expected_category": "Bug Report",
+    "expected_priority": "Medium",
+    "expected_team": "Engineering",
+    "tests": "Sarcasm without profanity, caps, or exclamation marks — no formal anger signal is present, so this checks the model reads negative sentiment from sarcasm rather than missing it, while still classifying by content (recurring account issue) rather than tone. Borderline High vs Medium given the recurrence over weeks — good M4S6 discussion case"
+  },
+  {
+    "id": 26,
+    "ticket": "There's a charge on my account I never made. I think someone else has access — I'm considering involving my bank and legal counsel if this isn't resolved.",
+    "expected_category": "Account Access",
+    "expected_priority": "High",
+    "expected_team": "Identity & Access",
+    "tests": "Second, higher-stakes ambiguous case (Account Access vs Billing) paired with an explicit security/fraud angle and a legal-escalation threat. Reasoning should name Billing as the runner-up and explain why unauthorized-access is treated as the root cause"
+  },
+  {
+    "id": 27,
+    "ticket": "I can't log into my account, it says invalid password even though I reset it yesterday.",
+    "expected_category": "Account Access",
+    "expected_priority": "Medium",
+    "expected_team": "Identity & Access",
+    "tests": "Exact duplicate of ticket 1's text. Not a category/priority test — this is for exercising possible_duplicate_of in app/analytics.py; run it after ticket 1 has already been logged and confirm the response flags it as a likely duplicate"
+  },
+  {
+    "id": 28,
+    "ticket": "Uncaught TypeError: Cannot read properties of undefined (reading 'map') at OrdersList.render (bundle.js:4821) — happens every time I open the Orders tab.",
+    "expected_category": "Bug Report",
+    "expected_priority": "High",
+    "expected_team": "Engineering",
+    "tests": "Pasted stack trace / log dump instead of prose. Checks the model still extracts a clear routing decision from a very different register of text (code/log syntax) — 'every time' on one whole tab counts as a total feature failure for this user"
+  },
+  {
+    "id": 29,
+    "ticket": "please help please help please help please help please help",
+    "expected_category": "Unclassified",
+    "expected_priority": "Low",
+    "expected_team": "Human Triage",
+    "tests": "Repetitive, spam-like plea with no anger signal and no description of any actual problem — distinct from the random-character gibberish in ticket 11; checks repetition alone isn't mistaken for either urgency or real content"
+  },
+  {
+    "id": 30,
+    "ticket": "Just wanted to say the new update is great, love the new dashboard!",
+    "expected_category": "General Inquiry",
+    "expected_priority": "Low",
+    "expected_team": "Customer Success",
+    "tests": "Pure positive feedback with no problem and no request at all. The current prompt's Case A/B split is framed entirely around identifying a problem, so praise doesn't cleanly fit either bucket — flag this as an untested prompt boundary worth discussing with the mentor (M4A4) rather than assuming General Inquiry is guaranteed"
+  },
+  {
+    "id": 31,
+    "ticket": "u no y its down again fix pls asap!!",
+    "expected_category": "Bug Report",
+    "expected_priority": "Medium",
+    "expected_team": "Engineering",
+    "tests": "Casual texting-shorthand urgency ('!!', 'asap', 'pls') with NO insult, profanity, or contemptuous wording — must not be read as angry just because of punctuation, and must not be escalated to High just because 'down again' sounds bad when neither scope nor duration is actually stated. Reported live as a real bug (was returning High); fixed by (1) redefining anger signals to require hostile word choice, not punctuation/caps, and (2) requiring High to be explicitly evidenced rather than assumed on vague scope"
+  },
+  {
+    "id": 32,
+    "ticket": "I can't log in even after resetting my password",
+    "expected_category": "Account Access",
+    "expected_priority": "Medium",
+    "expected_team": "Identity & Access",
+    "tests": "Workaround-exhausted case: the standard self-service fix (password reset) was already tried by the user and did NOT resolve the issue. Reasoning must never claim a workaround exists or 'is possible' when the ticket itself says it already failed — it must say the fix was tried and didn't work, so it needs direct investigation. Reported live as a real bug (model falsely claimed a workaround was available); fixed in app/llm_client.py's Medium definition"
+  },
+  {
+    "id": 33,
+    "ticket": "My card was charged $24,750 instead of $247 for my subscription renewal, please refund the difference.",
+    "expected_category": "Billing",
+    "expected_priority": "High",
+    "expected_team": "Billing Ops",
+    "tests": "Single user, but the dollar amount at stake is large enough to be High even though only one account is affected — contrast with ticket 14/23, where a routine small mischarge stays Medium. Priority should scale with stated stakes, not just user count"
+  },
+  {
+    "id": 34,
+    "ticket": "I run payroll for my 40-person company today and the app won't let me submit it — the deadline is in 2 hours.",
+    "expected_category": "Bug Report",
+    "expected_priority": "High",
+    "expected_team": "Engineering",
+    "tests": "Single user, but a business-critical process with a hard, stated deadline — High priority is driven by the stakes/deadline, not by the number of app users affected (still just one account). Reasoning must attribute this correctly ('blocks this user's payroll deadline') and must NOT hallucinate 'many users' or 'system-wide' language just because the priority is High. NOTE: category/team classification for this one is inconsistent (Bug Report/Engineering vs General Inquiry/Customer Success across runs) — a real, disclosed limitation, not yet fixed"
   }
 ]

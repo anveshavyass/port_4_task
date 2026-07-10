@@ -8,14 +8,11 @@ env_path = project_root / ".env"
 
 load_dotenv(env_path)
 
-OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
-MODEL_NAME = os.getenv("MODEL_NAME", "llama3.2:latest")
 REQUEST_LOG_PATH = os.getenv("REQUEST_LOG_PATH", "logs/requests.jsonl")
 CORRECTIONS_LOG_PATH = os.getenv("CORRECTIONS_LOG_PATH", "logs/corrections.jsonl")
 RESOLUTIONS_LOG_PATH = os.getenv("RESOLUTIONS_LOG_PATH", "logs/resolutions.jsonl")
-ROUTER_PROVIDER = os.getenv("ROUTER_PROVIDER", "groq").strip().lower()
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "").strip()
-GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 SLA_HOURS = {
     "High": int(os.getenv("SLA_HIGH_HOURS", "2")),
     "Medium": int(os.getenv("SLA_MEDIUM_HOURS", "8")),
