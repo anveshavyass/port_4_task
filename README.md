@@ -21,10 +21,6 @@ A local-first support ticket router built with Python, FastAPI-style service str
   streamlit run app.py
   ```
 
-## Architecture
-
-The routing flow uses a fast keyword-based path first and falls back to the LLM-backed service when needed.
-
 ## Notes
 
 - The project uses environment-based configuration and avoids hardcoded secrets.
