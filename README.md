@@ -1,23 +1,8 @@
 # 🧾 Routely — Smart Ticket Router
 
-**Local-first, LLM-powered support ticket triage.** Feed it a raw ticket, get back a structured, schema-validated decision: category, priority, assigned team, SLA, reasoning, and duplicate/outage flags — in seconds, not the ~4 minutes of manual routing.
+**Turn a raw support ticket into a routing decision in seconds, not the ~4 minutes it takes a human.** Category, priority, team, SLA, reasoning, duplicate/outage flags — schema-validated, every time.
 
 Built with **Python · Pydantic · OpenAI · Streamlit**
-
----
-
-## 📚 Table of Contents
-
-- [Overview](#-overview)
-- [Features](#-features)
-- [Components](#-components)
-- [Project Structure](#-project-structure)
-- [Setup](#️-setup)
-- [Running It](#️-running-it)
-- [Live Demo Walkthrough](#-live-demo-walkthrough)
-- [Routing Logic](#-routing-logic)
-- [Analytics & Logs](#-analytics--logs)
-- [Testing](#-testing)
 
 ---
 
@@ -74,6 +59,13 @@ All figures are recomputed live from the JSONL logs in `logs/` (see [app/analyti
 | **Overdue SLA count** | for every unresolved ticket, `now − routed_timestamp > sla_hours` (SLA hours from the formula above) |
 | **Category / priority breakdowns** | simple counts of each `category` / `priority` value across all routed requests |
 
+### 📦 Batch Processing
+- **File upload** — accepts a CSV (needs a `ticket` column) or a JSON file (a list of strings, or objects with a `ticket` field)
+- **One-click batch run** — "Route All Tickets" routes every ticket in the file through the same LLM → validate → repair → fallback pipeline as single-ticket routing, sequentially, and times the whole run
+- **Results table** — shows ticket ID, category, assigned team, priority (with a Critical tag for system-wide outages), reasoning, SLA hours, and confidence for every ticket in one `st.dataframe`
+- **Throughput readout** — reports total elapsed time and average seconds/ticket for the batch
+- **Export** — download the full results table as CSV or JSON directly from the dashboard
+
 ### 🖥️ Streamlit Dashboard (`app.py`)
 - Custom dark-mode theme with color-coded priority badges and a distinct violet "CRITICAL — SYSTEM-WIDE OUTAGE" banner
 - Live sidebar metrics: tickets routed, avg latency, avg *manual* routing time (for comparison), fallback rate, correction rate, overdue count
@@ -82,18 +74,8 @@ All figures are recomputed live from the JSONL logs in `logs/` (see [app/analyti
 - One-click **Resolve / Escalate / Flag as misrouted** actions per ticket (the 3 lifecycle buttons, detailed above)
 - Raw JSON inspector for any routed result
 
-### 📦 Batch Processing
-- **File upload** — accepts a CSV (needs a `ticket` column) or a JSON file (a list of strings, or objects with a `ticket` field)
-- **One-click batch run** — "Route All Tickets" routes every ticket in the file through the same LLM → validate → repair → fallback pipeline as single-ticket routing, sequentially, and times the whole run
-- **Results table** — shows ticket ID, category, assigned team, priority (with a Critical tag for system-wide outages), reasoning, SLA hours, and confidence for every ticket in one `st.dataframe`
-- **Throughput readout** — reports total elapsed time and average seconds/ticket for the batch
-- **Export** — download the full results table as CSV or JSON directly from the dashboard
-
 ### ⌨️ CLI (`router_cli.py`)
 - Route a single ticket from the terminal, prints the provider used and full JSON result — ideal for scripting or quick checks
-
-### ✅ Testing
-- `pytest` suite covering empty input, short/no-content input, SLA computation, and duplicate detection
 
 ### 🔐 Configuration & Safety
 - All config via `.env` (never hardcoded) — API keys, model choice, log paths, SLA hours, duplicate-detection thresholds
