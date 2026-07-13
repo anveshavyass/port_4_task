@@ -193,11 +193,6 @@ streamlit run app.py
 ```
 Opens at `http://localhost:8501`.
 
-**Tests:**
-```bash
-pytest
-```
-
 ---
 
 ## 🎬 Live Demo Walkthrough
@@ -212,12 +207,16 @@ Here's a taste of what that batch run produces (from [demo/routed_tickets.json](
 
 | Ticket ID | Ticket | Category | Assigned Team | Priority | Reasoning | SLA (hrs) | Confidence |
 |---|---|---|---|---|---|---|---|
-| `8a791f30` | "I can't log into my account, it says invalid password even though I reset it yesterday." | Account Access | Identity & Access | Medium | The user is unable to log into their account due to an invalid password message, and they have already attempted a password reset that did not resolve the issue. | 12 | 0.9 |
-| `7691b947` | "Server is down for everyone, we are losing money every minute!!" | Bug Report | Engineering | **High (Critical)** | The server is down for everyone, which is causing significant financial loss. | 1 | 1.0 |
-| `7b7729db` | "Someone logged into my account from a device I don't recognize and changed my email and password — I can't get back in." | Security | Security & Trust | High | The user reports unauthorized access to their account, which is a security issue that needs immediate attention. | 2 | 1.0 |
-| `43c701b0` | "Under GDPR I am requesting you delete all my personal data from your systems within 30 days." | Legal/Compliance | Legal & Compliance | Medium | The user is requesting the deletion of their personal data under GDPR, which is a legal matter; there is no indication of a security breach or account compromise. | 12 | 0.8 |
 | `9bb0d1e1` | "broken" | Unclassified | Human Triage | Low | No specific issue could be identified from the message, so a human should follow up for more details. | 24 | 0.1 |
+| `7691b947` | "Server is down for everyone, we are losing money every minute!!" | Bug Report | Engineering | **High (Critical)** | The server is down for everyone, which is causing significant financial loss. | 1 | 1.0 |
+| `af8939a6` | "THIS APP IS TRASH FIX IT NOW!!!!1!" | Unclassified | Human Triage | Medium | No specific issue could be identified, but the angry tone means a human should follow up promptly. | 12 | 0.5 |
 | `8c7ccad1` | "." | Unclassified | Human Triage | Low | No specific issue could be identified from the ticket content. | 24 | 0.0 |
+| `ef820359` | "I was charged twice but now I also can't log in" | Billing | Billing Ops | Medium | The user reports a duplicate charge, which is the main issue here since it involves money; the login problem they mentioned will need to be looked at separately. | 12 | 0.9 |
+| `c83bb5f5` | "Oh great, ANOTHER 'update' that broke the one thing that actually worked. Love it. Really top-notch stuff, thanks so much." | Bug Report | Engineering | Medium | The user reports that a recent update has caused a specific feature to break, which needs investigation. | 12 | 0.7 |
+| `0ce710f2` | "asdkjfh qwoieru 12345 !!!" | Unclassified | Human Triage | Low | No specific issue could be identified from the message, so a human should follow up for clarification. | 24 | 0.1 |
+| `d9f0d9fa` | "No puedo iniciar sesión en mi cuenta, dice que la contraseña es incorrecta aunque la acabo de restablecer." | Account Access | Identity & Access | Medium | The user cannot log into their account because the password reset did not work, so this needs direct investigation. | 12 | 0.9 |
+| `b5d3a735` | "wen fix bug plz its verry anoying and i cant acess my acount" | Account Access | Identity & Access | Medium | The user is having trouble accessing their account, which is the main issue here; the bug they mentioned will need to be looked at separately. | 12 | 0.8 |
+| `5f2a91c4` | "URGENT !!! I need to change my profile picture." | General Inquiry | Customer Success | Low | The user wants to change their profile picture, a routine account customization request; the "URGENT" wording and punctuation alone don't signal real business impact or anger, so it doesn't warrant escalation. | 24 | 0.9 |
 
 Notice how the router distinguishes a *routine* lockout (Medium) from an *account takeover* (Security/High), and correctly treats a bare `"broken"` as not-enough-information rather than guessing.
 
@@ -262,11 +261,3 @@ All events are appended as JSONL under `logs/`:
 These feed the live sidebar metrics in the Streamlit dashboard: total routed, avg latency, fallback rate, correction rate, and overdue-SLA count.
 
 ---
-
-## 🧪 Testing
-
-```bash
-pytest -v
-```
-
-Covers empty/no-content input handling, SLA computation, and fuzzy duplicate-ticket detection.
