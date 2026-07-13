@@ -46,26 +46,48 @@ Routely takes free-text support tickets and turns them into structured routing d
 
 ### ⏱️ SLA & Duplicate Detection
 - **Configurable SLA windows** per priority (Critical / High / Medium / Low), with a shorter Critical SLA auto-applied for system-wide outages
-- **Fuzzy duplicate detection** — `SequenceMatcher` similarity + shared-token overlap against a rolling lookback window (default 24h) flags likely repeat tickets
+  - `sla_hours = SLA_CRITICAL_HOURS` if `priority == High and system_wide_outage == True`, else `SLA_HOURS[priority]` (defaults: Critical 1h, High 2h, Medium 12h, Low 24h)
+- **Fuzzy duplicate detection** — flags a ticket as a likely repeat if either:
+  - `SequenceMatcher(current, previous).ratio() >= DUPLICATE_SIMILARITY_THRESHOLD` (default `0.8`), **or**
+  - shared word tokens between the two tickets `>= 2` **and** similarity ratio `>= 0.5`
+  - compared only against requests within the rolling lookback window (`DUPLICATE_LOOKBACK_HOURS`, default 24h); the closest match above threshold wins
+- **Confidence score** — the model returns a `confidence` value between `0.0` and `1.0` for every routed ticket; it's forced below `0.6` whenever a ticket is genuinely ambiguous between two categories, so a low score is a real signal to double-check the routing rather than a decorative number
 
-### 📋 Ticket Lifecycle Tracking
-- **Mark Resolved** — closes out a ticket and excludes it from overdue-SLA counts
-- **Escalate** — flags a ticket for immediate human follow-up
-- **Flag as misrouted** — lets a user log a correction with the category they believe is right, feeding a correction-rate metric
+### 📋 Ticket Lifecycle Tracking — the 3 per-ticket action buttons
+Every routed result (single or batch) gets three one-click actions in the UI:
+1. **Mark Resolved** — closes out the ticket and excludes it from the overdue-SLA count
+2. **Escalate** — flags the ticket for immediate human follow-up
+3. **This was misrouted** — lets the user pick the category they believe is correct, logging a correction that feeds the correction-rate metric
 
-### 📊 Analytics Engine
-- Total tickets routed, average latency, repair rate, fallback/error rate, correction rate
-- Category and priority breakdowns
-- **Overdue SLA counter** — computed live from timestamps + priority-based SLA windows
+Each button is disabled after use (per ticket) so the same action can't be logged twice.
+
+### 📊 Analytics Engine — the numbers and how they're computed
+All figures are recomputed live from the JSONL logs in `logs/` (see [app/analytics.py](app/analytics.py)):
+
+| Metric | Formula |
+|---|---|
+| **Total tickets routed** | count of all entries in `requests.jsonl` |
+| **Average latency (ms)** | `sum(latency_ms for each request) / total requests` |
+| **Repair rate %** | `(requests where path_taken == "repair") / total requests × 100` |
+| **Fallback/error rate %** | `(requests where path_taken == "fallback") / total requests × 100` |
+| **Correction rate %** | `(entries in corrections.jsonl) / total requests × 100` |
+| **Overdue SLA count** | for every unresolved ticket, `now − routed_timestamp > sla_hours` (SLA hours from the formula above) |
+| **Category / priority breakdowns** | simple counts of each `category` / `priority` value across all routed requests |
 
 ### 🖥️ Streamlit Dashboard (`app.py`)
 - Custom dark-mode theme with color-coded priority badges and a distinct violet "CRITICAL — SYSTEM-WIDE OUTAGE" banner
 - Live sidebar metrics: tickets routed, avg latency, avg *manual* routing time (for comparison), fallback rate, correction rate, overdue count
 - Category/team filter that highlights matching results and dims non-matches
 - Built-in example prompts + free-text entry form
-- One-click **Resolve / Escalate / Flag as misrouted** actions per ticket
+- One-click **Resolve / Escalate / Flag as misrouted** actions per ticket (the 3 lifecycle buttons, detailed above)
 - Raw JSON inspector for any routed result
-- **Batch routing** — upload a CSV or JSON file of tickets, route them all in one pass, view a results table, and download the output as CSV or JSON
+
+### 📦 Batch Processing
+- **File upload** — accepts a CSV (needs a `ticket` column) or a JSON file (a list of strings, or objects with a `ticket` field)
+- **One-click batch run** — "Route All Tickets" routes every ticket in the file through the same LLM → validate → repair → fallback pipeline as single-ticket routing, sequentially, and times the whole run
+- **Results table** — shows ticket ID, category, assigned team, priority (with a Critical tag for system-wide outages), reasoning, SLA hours, and confidence for every ticket in one `st.dataframe`
+- **Throughput readout** — reports total elapsed time and average seconds/ticket for the batch
+- **Export** — download the full results table as CSV or JSON directly from the dashboard
 
 ### ⌨️ CLI (`router_cli.py`)
 - Route a single ticket from the terminal, prints the provider used and full JSON result — ideal for scripting or quick checks
