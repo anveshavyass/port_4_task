@@ -6,9 +6,18 @@ Built with **Python · Pydantic · OpenAI · Streamlit**
 
 ---
 
+## 🎯 Use Case
+
+Routely is a **first-triage automation tool for a support/helpdesk inbox.**
+
+Concretely: a support team lead or L1 triage agent gets a stream of raw messages (email, chat, a ticket form) and today has to manually read each one, decide what it's about, how urgent it is, and which team should own it — before any actual work on the issue even starts. That's slow, inconsistent (different people triage differently), and doesn't scale past a handful of tickets an hour.
+
+Routely automates that first step: category, priority, assigned team, and SLA come back in seconds — with **Escalate** for anything that needs a human right now, and **Batch Routing** for clearing an entire backlog in one pass. It's tuned for a **SaaS/software product's support desk** specifically (billing, account access, bugs, integrations, security), not a generic "any business" tool.
 ## ✨ Overview
 
 Routely takes free-text support tickets and turns them into structured routing decisions using an LLM constrained by a strict Pydantic schema. If the model's output doesn't validate, Routely automatically asks it to repair the response — and if that fails too, it degrades safely to a human-triage fallback instead of crashing or guessing. Every decision is logged, deduplicated against recent history, and trackable through resolution/escalation/correction workflows — all visualized in a live Streamlit dashboard, or scriptable from the CLI.
+
+---
 
 ## 🚀 Features
 
@@ -30,8 +39,17 @@ Routely takes free-text support tickets and turns them into structured routing d
 - **Multilingual-tolerant** — non-English tickets are still classified sensibly (see demo below)
 
 ### ⏱️ SLA & Duplicate Detection
-- **Configurable SLA windows** per priority (Critical / High / Medium / Low), with a shorter Critical SLA auto-applied for system-wide outages
-  - `sla_hours = SLA_CRITICAL_HOURS` if `priority == High and system_wide_outage == True`, else `SLA_HOURS[priority]` (defaults: Critical 1h, High 2h, Medium 12h, Low 24h)
+- **Configurable SLA windows** per priority, with a shorter Critical SLA auto-applied for system-wide outages:
+  - `sla_hours = SLA_CRITICAL_HOURS` if `priority == High and system_wide_outage == True`, else `SLA_HOURS[priority]`
+
+  | Priority | Default SLA |
+  |---|---|
+  | 🟣 Critical | under 1 hour |
+  | 🔴 High | 2 hours |
+  | 🟠 Medium | 12 hours |
+  | 🟢 Low | 24 hours |
+
+  A ticket is **overdue** the moment `now − ticket_timestamp > sla_hours` and it hasn't been marked resolved.
 - **Fuzzy duplicate detection** — flags a ticket as a likely repeat if either:
   - `SequenceMatcher(current, previous).ratio() >= DUPLICATE_SIMILARITY_THRESHOLD` (default `0.8`), **or**
   - shared word tokens between the two tickets `>= 2` **and** similarity ratio `>= 0.5`
@@ -49,15 +67,15 @@ Each button is disabled after use (per ticket) so the same action can't be logge
 ### 📊 Analytics Engine — the numbers and how they're computed
 All figures are recomputed live from the JSONL logs in `logs/` (see [app/analytics.py](app/analytics.py)):
 
-| Metric | Formula |
-|---|---|
-| **Total tickets routed** | count of all entries in `requests.jsonl` |
-| **Average latency (ms)** | `sum(latency_ms for each request) / total requests` |
-| **Repair rate %** | `(requests where path_taken == "repair") / total requests × 100` |
-| **Fallback/error rate %** | `(requests where path_taken == "fallback") / total requests × 100` |
-| **Correction rate %** | `(entries in corrections.jsonl) / total requests × 100` |
-| **Overdue SLA count** | for every unresolved ticket, `now − routed_timestamp > sla_hours` (SLA hours from the formula above) |
-| **Category / priority breakdowns** | simple counts of each `category` / `priority` value across all routed requests |
+| Metric | Formula | Meaning |
+|---|---|---|
+| **Total tickets routed** | count of all entries in `requests.jsonl` | How many tickets have been processed so far |
+| **Average latency (ms)** | `sum(latency_ms for each request) / total requests` | How long, on average, the AI takes to return a routing decision |
+| **Repair rate %** | `(requests where path_taken == "repair") / total requests × 100` | How often the AI's first answer didn't match the schema and had to be auto-corrected |
+| **Fallback/error rate %** | `(requests where path_taken == "fallback") / total requests × 100` | How often did the AI give up and hand the ticket to a human instead of answering? |
+| **Correction rate %** | `(entries in corrections.jsonl) / total requests × 100` | Out of all tickets routed, what % a human later said was wrong by clicking "This was misrouted" and picking the correct category — i.e. how often did a real person catch the AI making a mistake? |
+| **Overdue SLA count** | for every unresolved ticket, `now − ticket_timestamp > sla_hours` | How many open tickets have already blown past their response-time deadline |
+| **Category / priority breakdowns** | simple counts of each `category` / `priority` value across all routed requests | Where ticket volume is concentrated — which categories/priorities show up most |
 
 ### 📦 Batch Processing
 - **File upload** — accepts a CSV (needs a `ticket` column) or a JSON file (a list of strings, or objects with a `ticket` field)
@@ -192,14 +210,14 @@ The fastest way to see everything in action:
 
 Here's a taste of what that batch run produces (from [demo/routed_tickets.json](demo/routed_tickets.json)):
 
-| Ticket | Category | Team | Priority | SLA |
-|---|---|---|---|---|
-| "I can't log into my account, it says invalid password even though I reset it yesterday." | Account Access | Identity & Access | Medium | 12h |
-| "Server is down for everyone, we are losing money every minute!!" | Bug Report | Engineering | **High (Critical)** | 1h |
-| "Someone logged into my account from a device I don't recognize and changed my email and password." | Security | Security & Trust | High | 2h |
-| "Under GDPR I am requesting you delete all my personal data from your systems within 30 days." | Legal/Compliance | Legal & Compliance | Medium | 12h |
-| "broken" | Unclassified | Human Triage | Low | 24h |
-| "." | Unclassified | Human Triage | Low | 24h |
+| Ticket ID | Ticket | Category | Assigned Team | Priority | Reasoning | SLA (hrs) | Confidence |
+|---|---|---|---|---|---|---|---|
+| `8a791f30` | "I can't log into my account, it says invalid password even though I reset it yesterday." | Account Access | Identity & Access | Medium | The user is unable to log into their account due to an invalid password message, and they have already attempted a password reset that did not resolve the issue. | 12 | 0.9 |
+| `7691b947` | "Server is down for everyone, we are losing money every minute!!" | Bug Report | Engineering | **High (Critical)** | The server is down for everyone, which is causing significant financial loss. | 1 | 1.0 |
+| `7b7729db` | "Someone logged into my account from a device I don't recognize and changed my email and password — I can't get back in." | Security | Security & Trust | High | The user reports unauthorized access to their account, which is a security issue that needs immediate attention. | 2 | 1.0 |
+| `43c701b0` | "Under GDPR I am requesting you delete all my personal data from your systems within 30 days." | Legal/Compliance | Legal & Compliance | Medium | The user is requesting the deletion of their personal data under GDPR, which is a legal matter; there is no indication of a security breach or account compromise. | 12 | 0.8 |
+| `9bb0d1e1` | "broken" | Unclassified | Human Triage | Low | No specific issue could be identified from the message, so a human should follow up for more details. | 24 | 0.1 |
+| `8c7ccad1` | "." | Unclassified | Human Triage | Low | No specific issue could be identified from the ticket content. | 24 | 0.0 |
 
 Notice how the router distinguishes a *routine* lockout (Medium) from an *account takeover* (Security/High), and correctly treats a bare `"broken"` as not-enough-information rather than guessing.
 
