@@ -76,9 +76,9 @@
     "id": 10,
     "ticket": "THIS APP IS TRASH FIX IT NOW!!!!1!",
     "expected_category": "Unclassified",
-    "expected_priority": "High",
+    "expected_priority": "Medium",
     "expected_team": "Human Triage",
-    "tests": "All-caps insult with zero description of what's actually wrong. Per the implemented prompt rule (llm_client.py), no-concrete-content + anger signals present = Unclassified/Human Triage but priority High (not Low) so an angry, contentless ticket still gets prompt human follow-up. NOTE: an earlier version of this fixture incorrectly expected Low here — corrected to match the actual implemented logic"
+    "tests": "All-caps insult with zero description of what's actually wrong. Per the implemented prompt rule (llm_client.py), no-concrete-content + anger signals present = Unclassified/Human Triage, priority Medium — the issue itself is unstated, so it doesn't earn High, but the angry tone still means a human should follow up promptly rather than defaulting to Low. NOTE: an earlier version of this fixture expected High here — corrected per updated prompt rule"
   },
   {
     "id": 11,
@@ -295,5 +295,23 @@
     "expected_team": "Identity & Access",
     "expected_system_wide_outage": false,
     "tests": "Contrast case for the new Security category: this is the account owner's OWN access trouble with no third party involved, so it must stay plain Account Access/Medium, not escalate to Security just because the topic is 'account access'-adjacent. Security is reserved for third-party/compromise language only (see tickets 21 and 26)"
+  },
+  {
+    "id": 37,
+    "ticket": "Honestly considering canceling our subscription if this keeps happening — third outage this month.",
+    "expected_category": "Bug Report",
+    "expected_priority": "High",
+    "expected_team": "Engineering",
+    "expected_system_wide_outage": false,
+    "tests": "Business-risk override: the outage description alone ('third outage this month') is brief and would otherwise read as a routine, Medium-level technical issue with no stated scope. The explicit cancellation threat combined with stated recurrence is a business-risk signal that pushes this to High even though no single outage is described as total/system-wide right now — reasoning should name both the recurring-outage pattern and the churn risk. system_wide_outage stays false: no wording says the current outage affects many users, only that it has recurred for this customer"
+  },
+  {
+    "id": 38,
+    "ticket": "Discovered that the /admin endpoint is accessible without authentication if you change the URL slightly — reporting this now.",
+    "expected_category": "Security",
+    "expected_priority": "High",
+    "expected_team": "Security & Trust",
+    "expected_system_wide_outage": true,
+    "tests": "Vulnerability report rather than an account-compromise report: no specific account was taken over, but an auth-bypass flaw was discovered, which still belongs to Security/Security & Trust, not Bug Report. Priority High per the standing 'Security is always High' rule. system_wide_outage is true because the flaw is exploitable by any user, putting the whole system at risk even though no one is confirmed to have exploited it yet"
   }
 ]

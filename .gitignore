@@ -3,3 +3,4 @@ __pycache__/
 *.py[cod]
 .venv/
 smart_ticket_router_roadmap.md
+.DS_Store
