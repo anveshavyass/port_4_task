@@ -100,14 +100,14 @@
     "confidence": 0.9
   },
   {
-    "ticket_id": "1ae458ee",
-    "ticket": "Getting error code 500 when calling /api/v2/orders endpoint intermittently since this morning",
-    "category": "Bug Report",
-    "assigned_team": "Engineering",
-    "priority": "Medium",
-    "reasoning": "The user reports an intermittent error code 500 when calling a specific API endpoint, which needs investigation; no other issues were mentioned.",
-    "sla_hours": 12,
-    "confidence": 0.8
+    "ticket_id": "5f2a91c4",
+    "ticket": "URGENT !!! I need to change my profile picture.",
+    "category": "General Inquiry",
+    "assigned_team": "Customer Success",
+    "priority": "Low",
+    "reasoning": "The user wants to change their profile picture, a routine account customization request; the 'URGENT' wording and punctuation alone don't signal real business impact or anger, so it doesn't warrant escalation.",
+    "sla_hours": 24,
+    "confidence": 0.9
   },
   {
     "ticket_id": "f5c04d24",
