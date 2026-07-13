@@ -186,7 +186,7 @@ def _build_messages(ticket_text: str, repair_context: str = None, invalid_respon
         "profile picture' get the exact same Low priority, because nothing about the actual scope or duration "
         "changed — only the reasoning sentence differs, by adding a note about the tone. "
         "Case B — ticket has NO concrete content at all: set category to Unclassified and assigned_team to Human "
-        "Triage, confidence to 0.0. Then check for anger signals only to decide priority: if anger signals are "
+        "Triage. Then check for anger signals only to decide priority: if anger signals are "
         "present, set priority to Medium and explain in reasoning that no specific issue could be identified but the "
         "angry tone means a human should follow up promptly; if no anger signals are present, set priority to Low "
         "and explain in reasoning what information is missing, with no tone comment. "

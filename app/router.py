@@ -45,12 +45,17 @@ def _classify_with_llm(ticket_text: str, schema: dict[str, Any]) -> tuple[dict[s
                     result["provider_error"] = provider_error
                 return result, "repair"
             except Exception:
+                model_confidence = 0.0
+                if 'repaired' in locals() and isinstance(repaired, dict):
+                    candidate = repaired.get("confidence")
+                    if isinstance(candidate, (int, float)) and 0.0 <= candidate <= 1.0:
+                        model_confidence = float(candidate)
                 return {
                     "category": "Unclassified",
                     "priority": "Low",
                     "assigned_team": "Human Triage",
                     "reasoning": "Routing failed and the ticket requires human review.",
-                    "confidence": 0.0,
+                    "confidence": model_confidence,
                     "system_wide_outage": False,
                     "provider": "openai",
                     "provider_error": str(exc),
