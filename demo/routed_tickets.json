@@ -24,9 +24,9 @@
     "ticket": "This is RIDICULOUS, nothing works and I've been waiting 3 days!!!",
     "category": "Bug Report",
     "assigned_team": "Engineering",
-    "priority": "Medium",
-    "reasoning": "The user reports that nothing works, which indicates a technical issue, but it does not specify a severe impact or a broader outage affecting others.",
-    "sla_hours": 12,
+    "priority": "High",
+    "reasoning": "The user has been blocked for 3 days with a completely non-functional product and is visibly angry, indicating significant customer impact that warrants escalation.",
+    "sla_hours": 2,
     "confidence": 0.7
   },
   {

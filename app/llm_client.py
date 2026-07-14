@@ -3,7 +3,7 @@ from typing import Any, Optional
 
 import requests
 
-from app.config import OPENAI_API_KEY, OPENAI_MODEL
+from app.config import GROQ_API_KEY, GROQ_MODEL, OPENAI_API_KEY, OPENAI_MODEL
 
 ALLOWED_CATEGORIES = [
     "Billing",
@@ -31,7 +31,13 @@ ALLOWED_TEAMS = [
 
 
 class LLMProviderError(RuntimeError):
-    pass
+    def __init__(self, message: str, status_code: Optional[int] = None, both_failed: bool = False):
+        super().__init__(message)
+        self.status_code = status_code
+        self.both_failed = both_failed
+
+
+_FALLBACK_STATUS_CODES = (401, 429)
 
 
 def _build_messages(ticket_text: str, repair_context: str = None, invalid_response: Any = None) -> list[dict[str, str]]:
@@ -258,7 +264,7 @@ def _parse_model_response(raw_text: Any) -> dict[str, Any]:
 
 def call_openai(ticket_text: str, schema: dict[str, Any], repair_context: str = None, invalid_response: Any = None) -> dict[str, Any]:
     if not OPENAI_API_KEY:
-        raise LLMProviderError("OPENAI_API_KEY is not configured")
+        raise LLMProviderError("OPENAI_API_KEY is not configured", status_code=401)
 
     payload = {
         "model": OPENAI_MODEL,
@@ -276,7 +282,8 @@ def call_openai(ticket_text: str, schema: dict[str, Any], repair_context: str = 
         )
         response.raise_for_status()
     except requests.RequestException as exc:
-        raise LLMProviderError(f"OpenAI is unavailable: {str(exc)}") from exc
+        status_code = exc.response.status_code if exc.response is not None else None
+        raise LLMProviderError(f"OpenAI is unavailable: {str(exc)}", status_code=status_code) from exc
 
     data = response.json()
     raw_text = data.get("choices", [{}])[0].get("message", {}).get("content", "")
@@ -289,8 +296,62 @@ def call_openai(ticket_text: str, schema: dict[str, Any], repair_context: str = 
         raise LLMProviderError(f"OpenAI returned invalid JSON: {exc}") from exc
 
 
+def call_groq(ticket_text: str, schema: dict[str, Any], repair_context: str = None, invalid_response: Any = None) -> dict[str, Any]:
+    if not GROQ_API_KEY:
+        raise LLMProviderError("GROQ_API_KEY is not configured", status_code=401)
+
+    payload = {
+        "model": GROQ_MODEL,
+        "messages": _build_messages(ticket_text, repair_context, invalid_response),
+        "temperature": 0,
+        "response_format": {"type": "json_object"},
+    }
+
+    try:
+        response = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers={"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"},
+            json=payload,
+            timeout=60,
+        )
+        response.raise_for_status()
+    except requests.RequestException as exc:
+        status_code = exc.response.status_code if exc.response is not None else None
+        raise LLMProviderError(f"Groq is unavailable: {str(exc)}", status_code=status_code) from exc
+
+    data = response.json()
+    raw_text = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+    if raw_text == "":
+        raise LLMProviderError("Groq responded without content")
+
+    try:
+        return _parse_model_response(raw_text)
+    except (json.JSONDecodeError, ValueError) as exc:
+        raise LLMProviderError(f"Groq returned invalid JSON: {exc}") from exc
+
+
+def _call_with_fallback(
+    ticket_text: str,
+    schema: dict[str, Any],
+    repair_context: str = None,
+    invalid_response: Any = None,
+) -> tuple[dict[str, Any], str, Optional[str]]:
+    try:
+        return call_openai(ticket_text, schema, repair_context, invalid_response), "openai", None
+    except LLMProviderError as openai_exc:
+        if openai_exc.status_code not in _FALLBACK_STATUS_CODES:
+            raise
+        try:
+            return call_groq(ticket_text, schema, repair_context, invalid_response), "groq", str(openai_exc)
+        except LLMProviderError as groq_exc:
+            raise LLMProviderError(
+                f"OpenAI failed ({openai_exc}) and Groq fallback also failed ({groq_exc}).",
+                both_failed=True,
+            ) from groq_exc
+
+
 def call_model(ticket_text: str, schema: dict[str, Any]) -> tuple[dict[str, Any], str, Optional[str]]:
-    return call_openai(ticket_text, schema), "openai", None
+    return _call_with_fallback(ticket_text, schema)
 
 
 def repair_route(ticket_text: str, schema: dict[str, Any], validation_error: str, invalid_response: Any = None) -> tuple[dict[str, Any], str, Optional[str]]:
@@ -298,4 +359,4 @@ def repair_route(ticket_text: str, schema: dict[str, Any], validation_error: str
         "The previous response failed validation. Fix it and return valid JSON matching the schema exactly. "
         f"Validation error: {validation_error}"
     )
-    return call_openai(ticket_text, schema, repair_context, invalid_response), "openai", None
+    return _call_with_fallback(ticket_text, schema, repair_context, invalid_response)

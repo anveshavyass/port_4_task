@@ -61,11 +61,15 @@ def _classify_with_llm(ticket_text: str, schema: dict[str, Any]) -> tuple[dict[s
                     "provider_error": str(exc),
                 }, "fallback"
     except LLMProviderError as exc:
+        if getattr(exc, "both_failed", False):
+            reasoning = "Both OpenAI and Groq are unavailable. Please check your API keys and try again."
+        else:
+            reasoning = "The configured LLM provider is unavailable. Please check your OpenAI API key and try again."
         return {
             "category": "Unclassified",
             "priority": "Low",
             "assigned_team": "Human Triage",
-            "reasoning": "The configured LLM provider is unavailable. Please check your OpenAI API key and try again.",
+            "reasoning": reasoning,
             "confidence": 0.0,
             "system_wide_outage": False,
             "provider": "openai",

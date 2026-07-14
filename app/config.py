@@ -14,6 +14,8 @@ RESOLUTIONS_LOG_PATH = os.getenv("RESOLUTIONS_LOG_PATH", "logs/resolutions.jsonl
 ESCALATIONS_LOG_PATH = os.getenv("ESCALATIONS_LOG_PATH", "logs/escalations.jsonl")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "").strip()
+GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
 SLA_HOURS = {
     "Critical": int(os.getenv("SLA_CRITICAL_HOURS", "1")),
     "High": int(os.getenv("SLA_HIGH_HOURS", "2")),

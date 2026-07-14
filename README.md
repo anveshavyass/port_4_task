@@ -25,7 +25,7 @@ Routely takes free-text support tickets and turns them into structured routing d
 - **LLM-based classification** — routes tickets into 9 categories, 3 priority levels, and 9 teams using OpenAI's Chat Completions API
 - **Strict schema enforcement** — every response is validated against a Pydantic model (`TicketRoute`) with `extra="forbid"`, literal enums, and bounded fields
 - **Self-repair loop** — if the model returns invalid JSON or a schema mismatch, Routely re-prompts with the validation error and a two-stage repair attempt
-- **Safe fallback path** — if the provider is unreachable, misconfigured, or repair fails twice, the ticket routes to `Unclassified` / `Human Triage` / `Low` instead of erroring out
+- **Safe fallback path** — two-tier provider fallback (OpenAI → Groq), and if both are unreachable/misconfigured or repair fails twice, the ticket routes to `Unclassified` / `Human Triage` / `Low` instead of erroring out (see [Fallback Behavior](#-fallback-behavior) below)
 - **Empty-input guard** — blank tickets short-circuit to a friendly fallback without calling the LLM at all
 
 ### 🎯 Prompt Intelligence (the routing "rulebook")
@@ -84,6 +84,15 @@ All figures are recomputed live from the JSONL logs in `logs/` (see [app/analyti
 - **Throughput readout** — reports total elapsed time and average seconds/ticket for the batch
 - **Export** — download the full results table as CSV or JSON directly from the dashboard
 
+### 🔁 Fallback Behavior
+Routely never just errors out on a bad ticket — it degrades through three levels before giving up:
+
+1. **OpenAI (primary)** — every classification and repair attempt is tried against OpenAI first.
+2. **Groq (secondary)** — if OpenAI fails with a `401` (missing/invalid key) or `429` (rate limited), Routely automatically retries the *same request* against Groq (`_call_with_fallback` in [app/llm_client.py](app/llm_client.py)). 
+3. **Human Triage (final safety net)** — if Groq also fails, or the model's JSON repeatedly fails schema validation after the repair pass, the ticket routes to `Unclassified` / `Human Triage` / `Low` with `path_taken: "fallback"` in the logs, instead of crashing or guessing.
+
+**⚠️ Groq is not reliable for Batch Routing.** Groq's free/dev-tier rate limits (requests-per-minute and tokens-per-minute) are much stricter than OpenAI's. If OpenAI trips a `429` partway through a large batch and traffic fails over to Groq, Groq itself gets rate-limited within a few tickets — since there's no per-ticket backoff, those requests simply fail, cascading into `Unclassified` / `Human Triage` results for the rest of the batch rather than actually routing them. **Reason:** the fallback path was designed to rescue an occasional single-ticket failure, not to carry sustained throughput — Groq's rate ceiling is lower than what a multi-ticket batch run demands. For batch runs, make sure `OPENAI_API_KEY` is healthy and not rate-limited rather than counting on Groq to carry the load.
+
 ### 🖥️ Streamlit Dashboard (`app.py`)
 - Custom dark-mode theme with color-coded priority badges and a distinct violet "CRITICAL — SYSTEM-WIDE OUTAGE" banner
 - Live sidebar metrics: tickets routed, avg latency, avg *manual* routing time (for comparison), fallback rate, correction rate, overdue count
@@ -121,22 +130,24 @@ All figures are recomputed live from the JSONL logs in `logs/` (see [app/analyti
 
 ```
 Port_4/
-├── app.py                  # Streamlit dashboard
-├── router_cli.py           # CLI entrypoint
+├── app.py                    # Streamlit dashboard
+├── router_cli.py             # CLI entrypoint
 ├── app/
-│   ├── config.py           # .env-driven settings
-│   ├── schema.py           # TicketRoute Pydantic schema
-│   ├── llm_client.py        # Prompt rulebook + OpenAI calls + repair
-│   ├── router.py           # Orchestration: classify → validate → log
-│   └── analytics.py        # SLA, duplicates, stats, lifecycle tracking
+│   ├── config.py             # .env-driven settings
+│   ├── schema.py             # TicketRoute Pydantic schema
+│   ├── llm_client.py         # Prompt rulebook + OpenAI calls + repair
+│   ├── router.py             # Orchestration: classify → validate → log
+│   ├── analytics.py          # SLA, duplicates, stats, lifecycle tracking
+│   └── logger.py             # JSONL logging for every routed request
 ├── demo/
 │   ├── sample_tickets.json   # 20 example raw tickets
 │   └── routed_tickets.json   # Their routed output (for reference)
-├── logs/                   # Generated JSONL logs (requests/corrections/resolutions/escalations)
+├── logs/                     # Generated JSONL logs (requests/corrections/resolutions/escalations)
 ├── tests/
-│   └── test_router.py
+│   ├── test_router.py
+│   └── test_tickets.json
 ├── requirements.txt
-└── .env                    # Your local secrets/config (not committed)
+└── .env                      # Your local secrets/config (not committed)
 ```
 
 ---
@@ -163,8 +174,10 @@ pip install -r requirements.txt
 
 | Variable | Required | Default | Purpose |
 |---|---|---|---|
-| `OPENAI_API_KEY` | ✅ | — | Your OpenAI API key |
+| `OPENAI_API_KEY` | ✅ | — | Your OpenAI API key (primary provider) |
 | `OPENAI_MODEL` | | `gpt-4o-mini` | Model used for routing |
+| `GROQ_API_KEY` | | — | Optional Groq API key, used only as a fallback when OpenAI returns `401`/`429` (see [Fallback Behavior](#-fallback-behavior)) |
+| `GROQ_MODEL` | | `llama-3.3-70b-versatile` | Model used for Groq fallback calls |
 | `REQUEST_LOG_PATH` | | `logs/requests.jsonl` | Where routed requests are logged |
 | `CORRECTIONS_LOG_PATH` | | `logs/corrections.jsonl` | Where misrouting flags are logged |
 | `RESOLUTIONS_LOG_PATH` | | `logs/resolutions.jsonl` | Where resolved tickets are logged |

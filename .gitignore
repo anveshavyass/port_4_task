@@ -4,3 +4,4 @@ __pycache__/
 .venv/
 smart_ticket_router_roadmap.md
 .DS_Store
+architecture_flowchart.html
