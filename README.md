@@ -2,7 +2,7 @@
 
 **Turn a raw support ticket into a routing decision in seconds, not the ~4 minutes it takes a human.** Category, priority, team, SLA, reasoning, duplicate/outage flags — schema-validated, every time.
 
-Built with **Python · Pydantic · OpenAI · Streamlit**
+Built with **Python · Pydantic · OpenAI · Streamlit · FastAPI**
 
 ---
 
@@ -105,6 +105,12 @@ Routely never just errors out on a bad ticket — it degrades through three leve
 ### ⌨️ CLI (`router_cli.py`)
 - Route a single ticket from the terminal, prints the provider used and full JSON result — ideal for scripting or quick checks
 
+### 🌐 REST API (`api.py`)
+- **FastAPI** app exposing the same routing pipeline over HTTP, for integrating Routely into other services
+- `GET /health` — health check
+- `POST /route` — routes a single ticket (`{"ticket": "..."}`)
+- `POST /route/batch` — routes a list of tickets in one call (`{"tickets": ["...", "..."]}`)
+
 ### 🔐 Configuration & Safety
 - All config via `.env` (never hardcoded) — API keys, model choice, log paths, SLA hours, duplicate-detection thresholds
 - Graceful, explicit error surfacing (`provider_error`) instead of silent failures
@@ -117,6 +123,7 @@ Routely never just errors out on a bad ticket — it degrades through three leve
 |---|---|---|
 | **Streamlit UI** | [app.py](app.py) | Full web dashboard — single + batch routing, lifecycle actions, live stats, theming |
 | **CLI entrypoint** | [router_cli.py](router_cli.py) | Terminal-based single-ticket routing |
+| **REST API** | [api.py](api.py) | FastAPI app exposing `/health`, `/route`, and `/route/batch` endpoints |
 | **Routing orchestrator** | [app/router.py](app/router.py) | Ties together LLM call → validation → repair → fallback → logging → duplicate check |
 | **LLM client** | [app/llm_client.py](app/llm_client.py) | Builds the routing prompt/rulebook, calls OpenAI, parses responses, handles repair requests |
 | **Schema** | [app/schema.py](app/schema.py) | `TicketRoute` Pydantic model — the contract every routing decision must satisfy |
@@ -133,6 +140,7 @@ Routely never just errors out on a bad ticket — it degrades through three leve
 Port_4/
 ├── app.py                    # Streamlit dashboard
 ├── router_cli.py             # CLI entrypoint
+├── api.py                    # FastAPI REST API
 ├── app/
 │   ├── config.py             # .env-driven settings
 │   ├── schema.py             # TicketRoute Pydantic schema
@@ -206,6 +214,19 @@ python router_cli.py "I can't log into my account, it says invalid password even
 streamlit run app.py
 ```
 Opens at `http://localhost:8501`.
+
+**REST API:**
+```bash
+uvicorn api:app --reload
+```
+Opens at `http://localhost:8000`. Interactive docs at `http://localhost:8000/docs`.
+
+Example request:
+```bash
+curl -X POST http://localhost:8000/route \
+  -H "Content-Type: application/json" \
+  -d '{"ticket": "I cant log into my account, it says invalid password even though I reset it yesterday."}'
+```
 
 ---
 
