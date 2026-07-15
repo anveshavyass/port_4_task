@@ -47,6 +47,19 @@ def _parse_uploaded_tickets(uploaded_file) -> list[str]:
     return texts
 
 
+def _one_line(text: str) -> str:
+    return " ".join(str(text).split())
+
+
+def _to_summary(result: dict) -> dict:
+    return {
+        "category": result["category"],
+        "priority": result["priority"],
+        "assigned_team": result["assigned_team"],
+        "reasoning": _one_line(result["reasoning"]),
+    }
+
+
 def _rows_to_csv(rows: list[dict]) -> str:
     if not rows:
         return ""
@@ -280,7 +293,7 @@ if result:
             st.caption("Already flagged as misrouted.")
 
     with st.expander("Show raw JSON"):
-        st.json(result)
+        st.json(_to_summary(result))
 
 st.markdown("---")
 st.subheader("Batch Routing")
