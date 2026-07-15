@@ -233,8 +233,8 @@ The fastest way to see everything in action:
 1. Run `streamlit run app.py`
 2. Try the **built-in example dropdown** at the top, or type your own ticket, then click **Route Ticket**
 3. Scroll to **Batch Routing** → upload [demo/sample_tickets.json](demo/sample_tickets.json) → click **Route All Tickets** to see 20 realistic tickets routed at once, with a results table you can export as CSV/JSON
-Here are 20 demo tickets for evaluation covering all edge cases - demo/routed_tickets.json
-Here's a taste of what that batch run produces (from [demo/routed_tickets.json](demo/routed_tickets.json)):
+
+Here's a snipped of 10 tickets routed, all the 20 demo tickets are available in (demo/routed_tickets.json)):
 
 | Ticket ID | Ticket | Category | Assigned Team | Priority | Reasoning | SLA (hrs) | Confidence |
 |---|---|---|---|---|---|---|---|
