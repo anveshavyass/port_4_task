@@ -29,3 +29,4 @@ def route(request: RouteRequest) -> dict[str, Any]:
 @app.post("/route/batch")
 def route_batch(request: BatchRouteRequest) -> list[dict[str, Any]]:
     return [route_ticket(text) for text in request.tickets]
+#fastapi app logic
