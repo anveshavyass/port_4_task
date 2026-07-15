@@ -1,4 +1,3 @@
-# this can be used for batch processing as input json file
 [
   { "id": 1, "ticket": "I can't log into my account, it says invalid password even though I reset it yesterday." },
   { "id": 2, "ticket": "Server is down for everyone, we are losing money every minute!!" },
