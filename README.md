@@ -17,9 +17,19 @@ Routely automates that first step: category, priority, assigned team, and SLA co
 
 Routely takes free-text support tickets and turns them into structured routing decisions using an LLM constrained by a strict Pydantic schema. If the model's output doesn't validate, Routely automatically asks it to repair the response — and if that fails too, it degrades safely to a human-triage fallback instead of crashing or guessing. Every decision is logged, deduplicated against recent history, and trackable through resolution/escalation/correction workflows — all visualized in a live Streamlit dashboard, or scriptable from the CLI.
 
+The Streamlit dashboard opens on a landing page with two equal-size entry points — **Admin View** (the full triage dashboard) and **User View** (a stripped-down ticket-submission form for end users) — so the same app safely serves both a support requester and the team triaging their tickets.
+
 ---
 
 ## 🚀 Features
+
+### 🧭 Two Views: Admin vs. User
+The Streamlit app opens on a landing page with two entry points — the same routing pipeline underneath, but a completely different surface exposed to each audience:
+
+- **🙋 User View** — for the person submitting the ticket. A single text box and a **Submit Ticket** button. The ticket is routed through the full LLM → validate → repair → fallback pipeline and logged exactly like every other ticket, but the requester is only ever told one thing: *"Your ticket has been submitted. It will be resolved within N hours (SLA)."* Category, priority, assigned team, confidence, reasoning, and the ticket ID are never shown here — a requester has no need to see internal triage detail.
+- **🛠️ Admin View** — for the support/triage team. The complete dashboard: single + batch routing, live stats, category/team filters, per-ticket lifecycle actions, and dedicated tabs for every event log Routely keeps (detailed below).
+
+A **← Back to Home** action on either view returns to the landing page to switch roles.
 
 ### 🧠 Core Routing Engine
 - **LLM-based classification** — routes tickets into 9 categories, 3 priority levels, and 9 teams using OpenAI's Chat Completions API
@@ -54,12 +64,12 @@ Routely takes free-text support tickets and turns them into structured routing d
 - **Confidence score** — the model returns a `confidence` value between `0.0` and `1.0` for every routed ticket; it's forced below `0.6` whenever a ticket is genuinely ambiguous between two categories, so a low score is a real signal to double-check the routing rather than a decorative number
 
 ### 📋 Ticket Lifecycle Tracking — the 3 per-ticket action buttons
-Every routed result (single or batch) gets three one-click actions in the UI:
+Every routed ticket gets three one-click actions in the Admin View UI:
 1. **Mark Resolved** — closes out the ticket and excludes it from the overdue-SLA count
 2. **Escalate** — flags the ticket for immediate human follow-up
 3. **This was misrouted** — lets the user pick the category they believe is correct, logging a correction that feeds the correction-rate metric
 
-Each button is disabled after use (per ticket) so the same action can't be logged twice.
+These three actions are available in two places: right after routing a ticket in the **Ticket Routing** tab, and on every past ticket's card in the **Requests** tab (User View) — so any ticket, not just the one just routed, can be resolved, escalated, or corrected later. Each button is disabled after use (per ticket) so the same action can't be logged twice, in either location.
 
 ### 📊 Analytics Engine — the numbers and how they're computed
 All figures are recomputed live from the JSONL logs in `logs/` (see [app/analytics.py](app/analytics.py)):
@@ -67,7 +77,7 @@ All figures are recomputed live from the JSONL logs in `logs/` (see [app/analyti
 | Metric | Formula | Meaning |
 |---|---|---|
 | **Total tickets routed** | count of all entries in `requests.jsonl` | How many tickets have been processed so far |
-| **Average latency (ms)** | `sum(latency_ms for each request) / total requests` | How long, on average, the AI takes to return a routing decision |
+| **Average latency** | `sum(latency_ms for each request) / total requests` (computed in ms, displayed in seconds throughout the UI) | How long, on average, the AI takes to return a routing decision |
 | **Repair rate %** | `(requests where path_taken == "repair") / total requests × 100` | How often the AI's first answer didn't match the schema and had to be auto-corrected |
 | **Fallback/error rate %** | `(requests where path_taken == "fallback") / total requests × 100` | How often did the AI give up and hand the ticket to a human instead of answering? |
 | **Correction rate %** | `(entries in corrections.jsonl) / total requests × 100` | Out of all tickets routed, what % a human later said was wrong by clicking "This was misrouted" and picking the correct category — i.e. how often did a real person catch the AI making a mistake? |
@@ -92,11 +102,18 @@ Routely never just errors out on a bad ticket — it degrades through three leve
 
 ### 🖥️ Streamlit Dashboard (`app.py`)
 - Custom dark-mode theme with color-coded priority badges and a distinct violet "CRITICAL — SYSTEM-WIDE OUTAGE" banner
-- Live sidebar metrics: tickets routed, avg latency, avg *manual* routing time (for comparison), fallback rate, correction rate, overdue count
-- Category/team filter that highlights matching results and dims non-matches
-- Built-in example prompts + free-text entry form
-- One-click **Resolve / Escalate / Flag as misrouted** actions per ticket (the 3 lifecycle buttons, detailed above)
-- Raw JSON inspector for any routed result
+- Landing page (see [Two Views](#-two-views-admin-vs-user) above) routes into either the User View or the Admin View below
+- **Admin View** is organized into 5 tabs:
+  1. **Ticket Routing** — everything the dashboard has always done: live sidebar metrics (tickets routed, avg latency *in seconds*, avg manual routing time for comparison, fallback rate, correction rate, overdue count), a category/team filter that highlights matching results and dims non-matches, built-in example prompts + free-text entry form, one-click **Resolve / Escalate / Flag as misrouted** actions per routed ticket, and Batch Routing (upload → route → export as CSV/JSON)
+  2. **Requests** — every ticket ever routed, one card per ticket, newest first. Each card shows the full detail (ticket text, category, priority, team, reasoning, confidence, SLA, latency *in seconds*, path taken, provider) plus a **"Possible duplicate of: `<ticket_id>`"** warning when a duplicate was detected, and the same **Mark Resolved / Escalate / This was misrouted** actions as the Ticket Routing tab — so any ticket can be actioned straight from its log entry, not just the one just routed
+  3. **Corrections** — every ticket a human flagged as misrouted, newest first
+  4. **Escalations** — every ticket escalated for immediate follow-up, newest first
+  5. **Resolutions** — every ticket marked resolved, newest first
+- Each of the four log tabs (Requests / Corrections / Escalations / Resolutions) has a **"View as"** toggle with three formats:
+  - **User View** — human-readable cards, most recent entry first
+  - **Structured JSON** — an expandable JSON tree limited to `category`, `priority`, `assigned_team`, and `reasoning` per entry (Resolutions, which has no such fields, falls back to `ticket_id` + `timestamp`), most recent entry first
+  - **Raw JSON** — the literal, unmodified contents of the underlying `logs/*.jsonl` file, exactly as stored on disk (original order, all fields, untouched)
+- Raw JSON inspector for any single routed result (Ticket Routing tab)
 
 ### ⌨️ CLI (`router_cli.py`)
 - Route a single ticket from the terminal, prints the provider used and full JSON result — ideal for scripting or quick checks
@@ -117,7 +134,7 @@ Routely never just errors out on a bad ticket — it degrades through three leve
 
 | Component | File | What it does |
 |---|---|---|
-| **Streamlit UI** | [app.py](app.py) | Full web dashboard — single + batch routing, lifecycle actions, live stats, theming |
+| **Streamlit UI** | [app.py](app.py) | Landing page → Admin View (single + batch routing, lifecycle actions, live stats, log tabs) or User View (submit a ticket, see only its SLA) |
 | **CLI entrypoint** | [router_cli.py](router_cli.py) | Terminal-based single-ticket routing |
 | **REST API** | [api.py](api.py) | FastAPI app exposing `/health`, `/route`, and `/route/batch` endpoints |
 | **Routing orchestrator** | [app/router.py](app/router.py) | Ties together LLM call → validation → repair → fallback → logging → duplicate check |
@@ -230,9 +247,11 @@ curl -X POST http://localhost:8000/route \
 
 The fastest way to see everything in action:
 
-1. Run `streamlit run app.py`
-2. Try the **built-in example dropdown** at the top, or type your own ticket, then click **Route Ticket**
-3. Scroll to **Batch Routing** → upload [demo/sample_tickets.json](demo/sample_tickets.json) → click **Route All Tickets** to see 20 realistic tickets routed at once, with a results table you can export as CSV/JSON
+1. Run `streamlit run app.py` — you'll land on the title screen with **Admin View** and **User View**
+2. Click **Admin View** to reach the full dashboard (or try **User View** first to see the requester's side: submit a ticket and you'll only be told its SLA window, nothing else)
+3. In Admin View's **Ticket Routing** tab, try the **built-in example dropdown**, or type your own ticket, then click **Route Ticket**
+4. Scroll to **Batch Routing** → upload [demo/sample_tickets.json](demo/sample_tickets.json) → click **Route All Tickets** to see 20 realistic tickets routed at once, with a results table you can export as CSV/JSON
+5. Check the **Requests / Corrections / Escalations / Resolutions** tabs to see every logged event, toggle between User View / Structured JSON / Raw JSON, and action any past ticket directly from its card in the Requests tab
    
 Here's a snippet of 10 tickets, all 20 demo tickets in json format are visible in ([demo/routed_tickets.json](demo/routed_tickets.json)):
 
@@ -289,6 +308,8 @@ All events are appended as JSONL under `logs/`:
 - `resolutions.jsonl` — tickets marked resolved
 - `escalations.jsonl` — tickets escalated for human follow-up
 
-These feed the live sidebar metrics in the Streamlit dashboard: total routed, avg latency, fallback rate, correction rate, and overdue-SLA count.
+These feed the live sidebar metrics in the Streamlit dashboard: total routed, avg latency (shown in seconds; stored in the logs as `latency_ms`), fallback rate, correction rate, and overdue-SLA count.
+
+Each log also has its own tab in Admin View (**Requests / Corrections / Escalations / Resolutions**), viewable as human-readable cards, a filtered structured-JSON tree, or the raw file contents — see [Streamlit Dashboard](#-streamlit-dashboard-apppy) above.
 
 ---
