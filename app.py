@@ -117,8 +117,7 @@ st.markdown(
     .legend-high { background:#dc2626; }
     .legend-med { background:#f59e0b; }
     .legend-low { background:#22c55e; }
-    .legend-critical { background:#7c3aed; }
-    
+
     /* Result card styling */
     .result-card.match { border: 2px solid rgba(52,211,153,0.95); box-shadow: 0 30px 60px rgba(52,211,153,0.06); background: linear-gradient(180deg, rgba(8,20,38,0.6) 0%, rgba(8,20,38,0.85) 100%) !important; }
     .result-card.dim { opacity:0.65; filter:grayscale(20%); box-shadow: 0 6px 18px rgba(2,6,23,0.5); background: rgba(5,10,20,0.6) !important; }
@@ -162,7 +161,6 @@ with st.sidebar:
     st.markdown(
         """
         <div style='display:flex; flex-direction:column; gap:10px;'>
-            <div><span class='legend-chip legend-critical'></span>Critical</div>
             <div><span class='legend-chip legend-high'></span>High priority</div>
             <div><span class='legend-chip legend-med'></span>Medium priority</div>
             <div><span class='legend-chip legend-low'></span>Low priority</div>
