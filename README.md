@@ -26,18 +26,14 @@ Routely takes free-text support tickets and turns them into structured routing d
 - **Strict schema enforcement** — every response is validated against a Pydantic model (`TicketRoute`) with `extra="forbid"`, literal enums, and bounded fields
 - **Self-repair loop** — if the model returns invalid JSON or a schema mismatch, Routely re-prompts with the validation error and a two-stage repair attempt
 - **Safe fallback path** — two-tier provider fallback (OpenAI → Groq), and if both are unreachable/misconfigured or repair fails twice, the ticket routes to `Unclassified` / `Human Triage` / `Low` instead of erroring out (see [Fallback Behavior](#-fallback-behavior) below)
-- **Empty-input guard** — blank tickets short-circuit to a friendly fallback without calling the LLM at all
 
 ### 🎯 Prompt Intelligence (the routing "rulebook")
 - **Category vs. category disambiguation** — e.g. Security (third-party compromise) vs. Account Access (owner's own lockout); Legal/Compliance vs. Security/Billing
 - **Multi-issue tiebreaker logic** — when a ticket raises two distinct problems, the primary one is decided by a fixed 4-step order: (1) whichever issue the ticket itself states is more urgent/important wins outright; (2) otherwise, if only one issue involves money, the monetary one wins; (3) otherwise, a fixed category-importance ranking decides — `Security > Billing > Account Access > Bug Report > Integration/API > Legal/Compliance > Feature Request > General Inquiry`; (4) otherwise (same-rank categories, e.g. two Feature Requests), whichever was mentioned first wins. The category/team/priority fields always match the winning issue, and the losing issue is still surfaced in the reasoning in plain, non-technical language.
 - **Genuine category ambiguity (single issue)** — different from the multi-issue case above: when a ticket describes *one* issue that could honestly fit more than one category with no way to disambiguate, Routely picks the closer match but caps `confidence` below `0.6`, so a low score is a real signal to double-check the routing rather than a decorative number. It never explains the alternative category it considered in the reasoning field.
-- **Severe-stakes priority trigger** — a concrete dollar threshold (**$1,000+**) or a named hard deadline auto-escalates a single-user issue to High, without needing "many users affected"
-- **Business-risk override** — recurring incidents + an explicit churn/cancellation threat is treated as its own High-priority trigger
 - **Anger-signal detection by word choice, not punctuation** — insults/profanity/contempt count; ALL CAPS, "asap," and "!!!" alone never do
-- **System-wide outage flag** — a dedicated boolean that only fires on genuinely broad-impact language ("everyone," "no one," "the whole team") or a discovered auth/authz vulnerability, tightening the SLA to a Critical window
-- **No-content ("Case B") handling** — bare words with zero elaboration (`"broken"`) route to Human Triage instead of guessing a category
-- **Multilingual-tolerant** — non-English tickets are still classified sensibly (see demo below)
+- **No-content handling** — bare words with zero elaboration (`"broken"`) route to Human Triage instead of guessing a category
+- **Edge cases ** — many such edge cases like sarcastic tone, monetary issue (low or high), gibberish words, blank tickets, multilingual tickets, grammatical errors handled gracefully 
 
 ### ⏱️ SLA & Duplicate Detection
 - **Configurable SLA windows** per priority, with a shorter Critical SLA auto-applied for system-wide outages:
