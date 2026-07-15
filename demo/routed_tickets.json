@@ -1,4 +1,4 @@
-#demo of 20 tickets
+#demo of 20 tickets (ticket and output in json)
 [
   {
     "ticket_id": "8a791f30",
