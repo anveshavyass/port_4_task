@@ -33,7 +33,7 @@ Routely takes free-text support tickets and turns them into structured routing d
 - **Genuine category ambiguity (single issue)** — different from the multi-issue case above: when a ticket describes *one* issue that could honestly fit more than one category with no way to disambiguate, Routely picks the closer match but caps `confidence` below `0.6`, so a low score is a real signal to double-check the routing rather than a decorative number. It never explains the alternative category it considered in the reasoning field.
 - **Anger-signal detection by word choice, not punctuation** — insults/profanity/contempt count; ALL CAPS, "asap," and "!!!" alone never do
 - **No-content handling** — bare words with zero elaboration (`"broken"`) route to Human Triage instead of guessing a category
-- **Edge cases ** — many such edge cases like sarcastic tone, monetary issue (low or high), gibberish words, blank tickets, multilingual tickets, grammatical errors handled gracefully 
+- **Edge cases** — many such edge cases like sarcastic tone, monetary issue (low or high), gibberish words, blank tickets, multilingual tickets, grammatical errors handled gracefully 
 
 ### ⏱️ SLA & Duplicate Detection
 - **Configurable SLA windows** per priority, with a shorter Critical SLA auto-applied for system-wide outages:
