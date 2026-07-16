@@ -1,4 +1,4 @@
-# 🧾 Routely — Smart Ticket Router
+# Routely — Smart Ticket Router
 
 **Turn a raw support ticket into a routing decision in seconds, not the ~4 minutes it takes a human.** Category, priority, team, SLA, reasoning, duplicate/outage flags — schema-validated, every time.
 
@@ -6,14 +6,14 @@ Built with **Python · Pydantic · OpenAI · Streamlit · FastAPI**
 
 ---
 
-## 🎯 Use Case
+## Use Case
 
 Routely is a **first-triage automation tool for a support/helpdesk inbox.**
 
 Concretely: a support team lead or L1 triage agent gets a stream of raw messages (email, chat, a ticket form) and today has to manually read each one, decide what it's about, how urgent it is, and which team should own it — before any actual work on the issue even starts. That's slow, inconsistent (different people triage differently), and doesn't scale past a handful of tickets an hour.
 
 Routely automates that first step: category, priority, assigned team, and SLA come back in seconds — with **Escalate** for anything that needs a human right now, and **Batch Routing** for clearing an entire backlog in one pass. It's tuned for a **SaaS/software product's support desk** specifically (billing, account access, bugs, integrations, security), not a generic "any business" tool.
-## ✨ Overview
+## Overview
 
 Routely takes free-text support tickets and turns them into structured routing decisions using an LLM constrained by a strict Pydantic schema. If the model's output doesn't validate, Routely automatically asks it to repair the response — and if that fails too, it degrades safely to a human-triage fallback instead of crashing or guessing. Every decision is logged, deduplicated against recent history, and trackable through resolution/escalation/correction workflows — all visualized in a live Streamlit dashboard, or scriptable from the CLI.
 
@@ -21,23 +21,21 @@ The Streamlit dashboard opens on a landing page with two equal-size entry points
 
 ---
 
-## 🚀 Features
+## Features
 
-### 🧭 Two Views: Admin vs. User
+### Two Views: Admin vs. User
 The Streamlit app opens on a landing page with two entry points — the same routing pipeline underneath, but a completely different surface exposed to each audience:
 
-- **🙋 User View** — for the person submitting the ticket. A single text box and a **Submit Ticket** button. The ticket is routed through the full LLM → validate → repair → fallback pipeline and logged exactly like every other ticket, but the requester is only ever told one thing: *"Your ticket has been submitted. It will be resolved within N hours (SLA)."* Category, priority, assigned team, confidence, reasoning, and the ticket ID are never shown here — a requester has no need to see internal triage detail.
-- **🛠️ Admin View** — for the support/triage team. The complete dashboard: single + batch routing, live stats, category/team filters, per-ticket lifecycle actions, and dedicated tabs for every event log Routely keeps (detailed below).
+- **User View** — for the person submitting the ticket. A single text box and a **Submit Ticket** button. The ticket is routed through the full LLM → validate → repair → fallback pipeline and logged exactly like every other ticket, but the requester is only ever told one thing: *"Your ticket has been submitted. It will be resolved within N hours (SLA).
+- **Admin View** — for the support/triage team. The complete dashboard: single + batch routing, live stats, category/team filters, per-ticket lifecycle actions, and dedicated tabs for every event log Routely keeps (detailed below).
 
-A **← Back to Home** action on either view returns to the landing page to switch roles.
-
-### 🧠 Core Routing Engine
+### Core Routing Engine
 - **LLM-based classification** — routes tickets into 9 categories, 3 priority levels, and 9 teams using OpenAI's Chat Completions API
 - **Strict schema enforcement** — every response is validated against a Pydantic model (`TicketRoute`) with `extra="forbid"`, literal enums, and bounded fields
 - **Self-repair loop** — if the model returns invalid JSON or a schema mismatch, Routely re-prompts with the validation error and a two-stage repair attempt
 - **Safe fallback path** — two-tier provider fallback (OpenAI → Groq), and if both are unreachable/misconfigured or repair fails twice, the ticket routes to `Unclassified` / `Human Triage` / `Low` instead of erroring out (see [Fallback Behavior](#-fallback-behavior) below)
 
-### 🎯 Prompt Intelligence (the routing "rulebook")
+### Prompt Intelligence (the routing "rulebook")
 - **Category vs. category disambiguation** — e.g. Security (third-party compromise) vs. Account Access (owner's own lockout); Legal/Compliance vs. Security/Billing
 - **Multi-issue tiebreaker logic** — when a ticket raises two distinct problems, the primary one is decided by a fixed 4-step order: (1) whichever issue the ticket itself states is more urgent/important wins outright; (2) otherwise, if only one issue involves money, the monetary one wins; (3) otherwise, a fixed category-importance ranking decides — `Security > Billing > Account Access > Bug Report > Integration/API > Legal/Compliance > Feature Request > General Inquiry`; (4) otherwise (same-rank categories, e.g. two Feature Requests), whichever was mentioned first wins. The category/team/priority fields always match the winning issue, and the losing issue is still surfaced in the reasoning in plain, non-technical language.
 - **Genuine category ambiguity (single issue)** — different from the multi-issue case above: when a ticket describes *one* issue that could honestly fit more than one category with no way to disambiguate, Routely picks the closer match but caps `confidence` below `0.6`, so a low score is a real signal to double-check the routing rather than a decorative number. It never explains the alternative category it considered in the reasoning field.
@@ -45,7 +43,7 @@ A **← Back to Home** action on either view returns to the landing page to swit
 - **No-content handling** — bare words with zero elaboration (`"broken"`) route to Human Triage instead of guessing a category
 - **Edge cases** — many such edge cases like sarcastic tone, monetary issue (low or high), gibberish words, blank tickets, multilingual tickets, grammatical errors handled gracefully 
 
-### ⏱️ SLA & Duplicate Detection
+### SLA & Duplicate Detection
 - **Configurable SLA windows** per priority, with a shorter Critical SLA auto-applied for system-wide outages:
   - `sla_hours = SLA_CRITICAL_HOURS` if `priority == High and system_wide_outage == True`, else `SLA_HOURS[priority]`
 
@@ -63,7 +61,7 @@ A **← Back to Home** action on either view returns to the landing page to swit
   - compared only against requests within the rolling lookback window (`DUPLICATE_LOOKBACK_HOURS`, default 24h); the closest match above threshold wins
 - **Confidence score** — the model returns a `confidence` value between `0.0` and `1.0` for every routed ticket; it's forced below `0.6` whenever a ticket is genuinely ambiguous between two categories, so a low score is a real signal to double-check the routing rather than a decorative number
 
-### 📋 Ticket Lifecycle Tracking — the 3 per-ticket action buttons
+### Ticket Lifecycle Tracking — the 3 per-ticket action buttons
 Every routed ticket gets three one-click actions in the Admin View UI:
 1. **Mark Resolved** — closes out the ticket and excludes it from the overdue-SLA count
 2. **Escalate** — flags the ticket for immediate human follow-up
@@ -71,7 +69,7 @@ Every routed ticket gets three one-click actions in the Admin View UI:
 
 These three actions are available in two places: right after routing a ticket in the **Ticket Routing** tab, and on every past ticket's card in the **Requests** tab (User View) — so any ticket, not just the one just routed, can be resolved, escalated, or corrected later. Each button is disabled after use (per ticket) so the same action can't be logged twice, in either location.
 
-### 📊 Analytics Engine — the numbers and how they're computed
+### Analytics Engine — the numbers and how they're computed
 All figures are recomputed live from the JSONL logs in `logs/` (see [app/analytics.py](app/analytics.py)):
 
 | Metric | Formula | Meaning |
@@ -84,23 +82,23 @@ All figures are recomputed live from the JSONL logs in `logs/` (see [app/analyti
 | **Overdue SLA count** | for every unresolved ticket, `now − ticket_timestamp > sla_hours` | How many open tickets have already blown past their response-time deadline |
 | **Category / priority breakdowns** | simple counts of each `category` / `priority` value across all routed requests | Where ticket volume is concentrated — which categories/priorities show up most |
 
-### 📦 Batch Processing
+### Batch Processing
 - **File upload** — accepts a CSV (needs a `ticket` column) or a JSON file (a list of strings, or objects with a `ticket` field)
 - **One-click batch run** — "Route All Tickets" routes every ticket in the file through the same LLM → validate → repair → fallback pipeline as single-ticket routing, sequentially, and times the whole run
 - **Results table** — shows ticket ID, category, assigned team, priority (with a Critical tag for system-wide outages), reasoning, SLA hours, and confidence for every ticket in one `st.dataframe`
 - **Throughput readout** — reports total elapsed time and average seconds/ticket for the batch
 - **Export** — download the full results table as CSV or JSON directly from the dashboard
 
-### 🔁 Fallback Behavior
+### Fallback Behavior
 Routely never just errors out on a bad ticket — it degrades through three levels before giving up:
 
 1. **OpenAI (primary)** — every classification and repair attempt is tried against OpenAI first.
 2. **Groq (secondary)** — if OpenAI fails with a `401` (missing/invalid key) or `429` (rate limited), Routely automatically retries the *same request* against Groq (`_call_with_fallback` in [app/llm_client.py](app/llm_client.py)). 
 3. **Human Triage (final safety net)** — if Groq also fails, or the model's JSON repeatedly fails schema validation after the repair pass, the ticket routes to `Unclassified` / `Human Triage` / `Low` with `path_taken: "fallback"` in the logs, instead of crashing or guessing.
 
-**⚠️ Groq is not reliable for Batch Routing.** Groq's free/dev-tier rate limits (requests-per-minute and tokens-per-minute) are much stricter than OpenAI's. If OpenAI trips a `429` partway through a large batch and traffic fails over to Groq, Groq itself gets rate-limited within a few tickets — since there's no per-ticket backoff, those requests simply fail, cascading into `Unclassified` / `Human Triage` results for the rest of the batch rather than actually routing them. **Reason:** the fallback path was designed to rescue an occasional single-ticket failure, not to carry sustained throughput — Groq's rate ceiling is lower than what a multi-ticket batch run demands. For batch runs, make sure `OPENAI_API_KEY` is healthy and not rate-limited rather than counting on Groq to carry the load.
+**Groq is not reliable for Batch Routing.** Groq's free/dev-tier rate limits (requests-per-minute and tokens-per-minute) are much stricter than OpenAI's. **Reason:** the fallback path was designed to rescue an occasional single-ticket failure, not to carry sustained throughput — Groq's rate ceiling is lower than what a multi-ticket batch run demands.
 
-### 🖥️ Streamlit Dashboard (`app.py`)
+### Streamlit Dashboard (`app.py`)
 - Custom dark-mode theme with color-coded priority badges and a distinct violet "CRITICAL — SYSTEM-WIDE OUTAGE" banner
 - Landing page (see [Two Views](#-two-views-admin-vs-user) above) routes into either the User View or the Admin View below
 - **Admin View** is organized into 5 tabs:
@@ -115,22 +113,22 @@ Routely never just errors out on a bad ticket — it degrades through three leve
   - **Raw JSON** — the literal, unmodified contents of the underlying `logs/*.jsonl` file, exactly as stored on disk (original order, all fields, untouched)
 - Raw JSON inspector for any single routed result (Ticket Routing tab)
 
-### ⌨️ CLI (`router_cli.py`)
+### CLI (`router_cli.py`)
 - Route a single ticket from the terminal, prints the provider used and full JSON result — ideal for scripting or quick checks
 
-### 🌐 REST API (`api.py`)
+### REST API (`api.py`)
 - **FastAPI** app exposing the same routing pipeline over HTTP, for integrating Routely into other services
 - `GET /health` — health check
 - `POST /route` — routes a single ticket (`{"ticket": "..."}`)
 - `POST /route/batch` — routes a list of tickets in one call (`{"tickets": ["...", "..."]}`)
 
-### 🔐 Configuration & Safety
+### Configuration & Safety
 - All config via `.env` (never hardcoded) — API keys, model choice, log paths, SLA hours, duplicate-detection thresholds
 - Graceful, explicit error surfacing (`provider_error`) instead of silent failures
 
 ---
 
-## 🧩 Components
+## Components
 
 | Component | File | What it does |
 |---|---|---|
@@ -147,7 +145,7 @@ Routely never just errors out on a bad ticket — it degrades through three leve
 | **Demo data** | [demo/sample_tickets.json](demo/sample_tickets.json), [demo/routed_tickets.json](demo/routed_tickets.json) | 20 realistic sample tickets + their actual routed output |
 | **Logs (generated)** | `logs/*.jsonl` | `requests`, `corrections`, `resolutions`, `escalations` — one JSONL file per event type |
 
-## 🗂 Project Structure
+## Project Structure
 
 ```
 Port_4/
@@ -174,7 +172,7 @@ Port_4/
 
 ---
 
-## ⚙️ Setup
+## Setup
 
 **1. Clone and enter the project**
 ```bash
@@ -215,7 +213,7 @@ Without `OPENAI_API_KEY`, every ticket safely falls back to `Unclassified` / `Hu
 
 ---
 
-## ▶️ Running It
+## Running It
 
 **CLI:**
 ```bash
@@ -243,7 +241,7 @@ curl -X POST http://localhost:8000/route \
 
 ---
 
-## 🎬 Live Demo Walkthrough
+## Live Demo Walkthrough
 
 The fastest way to see everything in action:
 
@@ -272,7 +270,7 @@ Notice how the router distinguishes a *routine* lockout (Medium) from an *accoun
 
 ---
 
-## 🧭 Routing Logic
+## Routing Logic
 
 **Category → Team mapping** (fixed, never guessed):
 
@@ -299,7 +297,7 @@ Notice how the router distinguishes a *routine* lockout (Medium) from an *accoun
 
 ---
 
-## 📊 Analytics & Logs
+## Analytics & Logs
 
 All events are appended as JSONL under `logs/`:
 
